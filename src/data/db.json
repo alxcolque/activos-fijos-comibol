@@ -1,0 +1,345 @@
+{
+  "user": {
+    "id": "usr-01",
+    "name": "Ing. Paula Flores",
+    "email": "paula@comibol.gob.bo",
+    "role": "Administrador de Activos",
+    "avatar": "../public/avatar/paula.jpeg",
+    "department": "Dirección de Activos Fijos - La Paz"
+  },
+  "roles": [
+    {
+      "id": "admin",
+      "name": "Administrador"
+    },
+    {
+      "id": "auxiliar",
+      "name": "Auxiliar Administrativo"
+    },
+    {
+      "id": "consultor",
+      "name": "Consultor / Auditor"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-01",
+      "name": "Maquinaria Pesada",
+      "code": "MP",
+      "description": "Equipos y maquinaria pesada para operaciones mineras"
+    },
+    {
+      "id": "cat-02",
+      "name": "Equipos de Computación",
+      "code": "EC",
+      "description": "Servidores, computadoras, laptops y equipos de red"
+    },
+    {
+      "id": "cat-03",
+      "name": "Vehículos",
+      "code": "VE",
+      "description": "Camionetas, volquetes livianos y transporte de personal"
+    },
+    {
+      "id": "cat-04",
+      "name": "Muebles y Enseres",
+      "code": "ME",
+      "description": "Escritorios, sillas, estantes y mobiliario de oficina"
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc-01",
+      "name": "Empresa Minera Huanuni",
+      "code": "HUA",
+      "city": "Oruro",
+      "address": "Distrito Minero Huanuni"
+    },
+    {
+      "id": "loc-02",
+      "name": "Oficina Central La Paz",
+      "code": "LPZ",
+      "city": "La Paz",
+      "address": "Av. Camacho Nro. 1433"
+    },
+    {
+      "id": "loc-03",
+      "name": "Empresa Minera Colquiri",
+      "code": "COL",
+      "city": "La Paz",
+      "address": "Distrito Minero Colquiri"
+    },
+    {
+      "id": "loc-04",
+      "name": "Complejo Metalúrgico Vinto",
+      "code": "VIN",
+      "city": "Oruro",
+      "address": "Carretera Oruro-Potosí Km 7.5"
+    }
+  ],
+  "custodians": [
+    {
+      "id": "cust-01",
+      "name": "Ing. Paula Flores",
+      "position": "Administrador de Activos Fijos",
+      "department": "Administración"
+    },
+    {
+      "id": "cust-02",
+      "name": "Lic. Ana María Rojas",
+      "position": "Jefa de Contabilidad",
+      "department": "Finanzas"
+    },
+    {
+      "id": "cust-03",
+      "name": "Ing. Roberto Arce",
+      "position": "Superintendente de Operaciones",
+      "department": "Operaciones Mineras"
+    },
+    {
+      "id": "cust-04",
+      "name": "Téc. Samuel Choque",
+      "position": "Encargado de Soporte Técnico",
+      "department": "Sistemas"
+    }
+  ],
+  "assets": [
+    {
+      "id": "act-01",
+      "code": "COM-MP-001",
+      "name": "Volquete Caterpillar 797F",
+      "categoryId": "cat-01",
+      "locationId": "loc-01",
+      "custodianId": "cust-03",
+      "status": "Operativo",
+      "value": 850000.00,
+      "purchaseDate": "2023-04-12",
+      "brand": "Caterpillar",
+      "model": "797F",
+      "serialNumber": "CAT797F-85001",
+      "observations": "Operando en tajo abierto. Mantenimiento preventivo al día.",
+      "image": "https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-02",
+      "code": "COM-EC-002",
+      "name": "Servidor Dell PowerEdge R750",
+      "categoryId": "cat-02",
+      "locationId": "loc-02",
+      "custodianId": "cust-04",
+      "status": "Operativo",
+      "value": 12500.00,
+      "purchaseDate": "2024-01-15",
+      "brand": "Dell",
+      "model": "PowerEdge R750",
+      "serialNumber": "DELL-R750-XYZ88",
+      "observations": "Servidor de base de datos central. Ubicado en Data Center Central.",
+      "image": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-03",
+      "code": "COM-VE-003",
+      "name": "Camioneta Toyota Hilux 4x4",
+      "categoryId": "cat-03",
+      "locationId": "loc-03",
+      "custodianId": "cust-03",
+      "status": "En mantenimiento",
+      "value": 38000.00,
+      "purchaseDate": "2024-08-20",
+      "brand": "Toyota",
+      "model": "Hilux SRX 4x4",
+      "serialNumber": "TOY-HILUX-9921",
+      "observations": "Ingresado por falla en sistema de suspensión delantera.",
+      "image": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-04",
+      "code": "COM-ME-004",
+      "name": "Escritorio Ejecutivo de Madera",
+      "categoryId": "cat-04",
+      "locationId": "loc-02",
+      "custodianId": "cust-01",
+      "status": "Operativo",
+      "value": 850.00,
+      "purchaseDate": "2022-11-05",
+      "brand": "Muebles Hurtado",
+      "model": "Ejecutivo Premium",
+      "serialNumber": "MH-2022-098",
+      "observations": "Ubicado en oficina de Administración Central.",
+      "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-05",
+      "code": "COM-MP-005",
+      "name": "Perforadora Hidráulica Sandvik",
+      "categoryId": "cat-01",
+      "locationId": "loc-01",
+      "custodianId": "cust-03",
+      "status": "En mantenimiento",
+      "value": 420000.00,
+      "purchaseDate": "2023-07-30",
+      "brand": "Sandvik",
+      "model": "DX800",
+      "serialNumber": "SAN-DX800-4422",
+      "observations": "Reparación de mangueras hidráulicas y cambio de filtros.",
+      "image": "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-06",
+      "code": "COM-EC-006",
+      "name": "Laptop HP ProBook 450 G9",
+      "categoryId": "cat-02",
+      "locationId": "loc-04",
+      "custodianId": "cust-02",
+      "status": "Operativo",
+      "value": 1150.00,
+      "purchaseDate": "2024-03-10",
+      "brand": "HP",
+      "model": "ProBook 450 G9",
+      "serialNumber": "5CD30922XX",
+      "observations": "Asignada a la Jefa de Contabilidad en Vinto.",
+      "image": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-07",
+      "code": "COM-MP-07",
+      "name": "Molino de Bolas Metso Outotec",
+      "categoryId": "cat-01",
+      "locationId": "loc-03",
+      "custodianId": "cust-03",
+      "status": "Operativo",
+      "value": 1500000.00,
+      "purchaseDate": "2021-02-18",
+      "brand": "Metso Outotec",
+      "model": "10x12",
+      "serialNumber": "METSO-MB-2021",
+      "observations": "Molino de bolas para procesamiento de mineral en Planta Concentradora Colquiri.",
+      "image": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-08",
+      "code": "COM-ME-008",
+      "name": "Silla Ergonómica Ejecutiva",
+      "categoryId": "cat-04",
+      "locationId": "loc-02",
+      "custodianId": "cust-02",
+      "status": "En stock",
+      "value": 290.00,
+      "purchaseDate": "2025-02-14",
+      "brand": "Tumpar",
+      "model": "Aria Black",
+      "serialNumber": "TUM-ARIA-091",
+      "observations": "En almacén central, lista para asignación.",
+      "image": "https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-09",
+      "code": "COM-EC-009",
+      "name": "Central Telefónica IP Grandstream",
+      "categoryId": "cat-02",
+      "locationId": "loc-02",
+      "custodianId": "cust-04",
+      "status": "De baja",
+      "value": 3500.00,
+      "purchaseDate": "2018-05-20",
+      "brand": "Grandstream",
+      "model": "UCM6208",
+      "serialNumber": "GS-UCM6208-OLD",
+      "observations": "Reemplazada por sistema en la nube. Dañada por sobrecarga eléctrica.",
+      "image": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=500&q=80"
+    },
+    {
+      "id": "act-10",
+      "code": "COM-MP-010",
+      "name": "Compresora de Aire Atlas Copco",
+      "categoryId": "cat-01",
+      "locationId": "loc-01",
+      "custodianId": "cust-03",
+      "status": "Operativo",
+      "value": 85000.00,
+      "purchaseDate": "2023-11-10",
+      "brand": "Atlas Copco",
+      "model": "XAS 185",
+      "serialNumber": "AC-XAS185-5544",
+      "observations": "Compresora portátil a diésel para perforación manual.",
+      "image": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80"
+    }
+  ],
+  "dashboard": {
+    "recentActivities": [
+      {
+        "id": "act-log-01",
+        "user": "Ing. Paula Flores",
+        "action": "Actualizó estado",
+        "target": "Camioneta Toyota Hilux (COM-VE-003)",
+        "time": "Hace 10 min",
+        "type": "warning"
+      },
+      {
+        "id": "act-log-02",
+        "user": "Lic. Ana María Rojas",
+        "action": "Asignó responsable",
+        "target": "Laptop HP ProBook (COM-EC-006)",
+        "time": "Hace 1 hora",
+        "type": "info"
+      },
+      {
+        "id": "act-log-03",
+        "user": "Ing. Paula Flores",
+        "action": "Registró nuevo activo",
+        "target": "Silla Ergonómica Ejecutiva (COM-ME-008)",
+        "time": "Hace 1 día",
+        "type": "success"
+      },
+      {
+        "id": "act-log-04",
+        "user": "Téc. Samuel Choque",
+        "action": "Reportó baja",
+        "target": "Central Telefónica Grandstream (COM-EC-009)",
+        "time": "Hace 2 días",
+        "type": "danger"
+      }
+    ]
+  },
+  "reports": [
+    {
+      "id": "rep-01",
+      "title": "Inventario General Valorizado",
+      "type": "Excel",
+      "size": "145 KB",
+      "date": "2026-07-20"
+    },
+    {
+      "id": "rep-02",
+      "title": "Resumen de Depreciación de Maquinaria",
+      "type": "PDF",
+      "size": "2.4 MB",
+      "date": "2026-07-18"
+    },
+    {
+      "id": "rep-03",
+      "title": "Distribución de Activos por Mina",
+      "type": "PDF",
+      "size": "1.1 MB",
+      "date": "2026-07-15"
+    },
+    {
+      "id": "rep-04",
+      "title": "Activos en Mantenimiento y Baja Reciente",
+      "type": "Excel",
+      "size": "98 KB",
+      "date": "2026-07-10"
+    }
+  ],
+  "settings": {
+    "companyName": "Corporación Minera de Bolivia - COMIBOL",
+    "nit": "1020304025",
+    "address": "Av. Camacho Nro. 1433, Piso 4, La Paz, Bolivia",
+    "phone": "+591 (2) 2115600",
+    "currency": "USD",
+    "language": "Español",
+    "theme": "Light",
+    "appVersion": "1.0.0-PROD-BASICO",
+    "lastAuditDate": "2025-12-31"
+  }
+}

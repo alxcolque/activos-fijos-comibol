@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@theme {
+  /* Override amber to match COMIBOL Gold #FDBC24 */
+  --color-amber-50: #fffdf2;
+  --color-amber-100: #fef4cd;
+  --color-amber-200: #fde293;
+  --color-amber-500: #fdbc24;
+  --color-amber-600: #e0a316;
+  --color-amber-700: #b5800b;
+
+  /* Override blue to match COMIBOL Blue #003C6E */
+  --color-blue-50: #f0f6fa;
+  --color-blue-100: #d1e3f2;
+  --color-blue-500: #003c6e;
+  --color-blue-600: #003c6e;
+  --color-blue-700: #002e55;
+  --color-blue-800: #001f3a;
+  --color-blue-900: #001324;
+}
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light;
+  background-color: #f9fafb; /* Slate-50 background for ERP style */
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Custom scrollbars for a premium SaaS look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
