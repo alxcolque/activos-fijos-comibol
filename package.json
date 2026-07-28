@@ -2,14 +2,14 @@
   "name": "temp-project",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://github.io",
+  "homepage": "https://alxcolque.github.io/activos-fijos-comibol",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
+    "deploy": "npx gh-pages -d dist",
     "preview": "vite preview"
   },
   "dependencies": {

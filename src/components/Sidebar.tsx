@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
+import { getAssetUrl } from '../utils/assets';
 import { AppLogo } from './AppLogo';
 import { 
   HiOutlineSquares2X2, 
@@ -97,7 +98,7 @@ export const Sidebar: React.FC = () => {
         <div className="p-4 border-t border-blue-700 bg-blue-800 shrink-0">
           <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center' : ''}`}>
             <img 
-              src={user.avatar} 
+              src={getAssetUrl(user.avatar)} 
               className="w-9 h-9 rounded-full border-2 border-amber-500 object-cover shrink-0"
               alt={user.name}
               title={user.name}

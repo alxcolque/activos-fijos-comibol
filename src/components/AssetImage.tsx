@@ -6,6 +6,7 @@ import {
   HiOutlineArchiveBox 
 } from 'react-icons/hi2';
 import { GiMining } from 'react-icons/gi';
+import { getAssetUrl } from '../utils/assets';
 
 interface AssetImageProps {
   src?: string;
@@ -65,7 +66,7 @@ export const AssetImage: React.FC<AssetImageProps> = ({
 
   return (
     <img 
-      src={src} 
+      src={getAssetUrl(src)} 
       alt={alt} 
       className={`rounded-xl border border-slate-200/50 ${className}`} 
       onError={() => setError(true)}

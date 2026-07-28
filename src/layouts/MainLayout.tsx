@@ -5,6 +5,7 @@ import { Header } from '../components/Header';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
+import { getAssetUrl } from '../utils/assets';
 import { useAssetStore } from '../store/assetStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { AppLogo } from '../components/AppLogo';
@@ -114,7 +115,7 @@ export const MainLayout: React.FC = () => {
             {user && (
               <div className="p-4 border-t border-blue-750 bg-blue-800 flex items-center gap-3 shrink-0">
                 <img 
-                  src={user.avatar} 
+                  src={getAssetUrl(user.avatar)} 
                   className="w-10 h-10 rounded-full border-2 border-amber-500 object-cover shrink-0"
                   alt={user.name} 
                 />

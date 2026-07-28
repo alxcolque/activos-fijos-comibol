@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '../utils/assets';
 
 interface AppLogoProps {
   collapsed?: boolean;
@@ -9,7 +10,7 @@ export const AppLogo: React.FC<AppLogoProps> = ({ collapsed, isDark = false }) =
   return (
     <div className="flex items-center gap-3 px-2 py-1 select-none">
       <img 
-        src="/logo.png" 
+        src={getAssetUrl('logo.png')} 
         alt="COMIBOL Logo" 
         className="w-10 h-10 object-contain shrink-0"
       />

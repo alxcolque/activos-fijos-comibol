@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
+import { getAssetUrl } from '../utils/assets';
 import { Breadcrumb } from './Breadcrumb';
 import { HiBars3, HiBell } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
@@ -92,7 +93,7 @@ export const Header: React.FC = () => {
             >
               <img
                 className="w-8 h-8 rounded-full border-2 border-amber-500 object-cover hover:opacity-90 transition-opacity"
-                src={user.avatar}
+                src={getAssetUrl(user.avatar)}
                 alt={user.name}
               />
             </button>

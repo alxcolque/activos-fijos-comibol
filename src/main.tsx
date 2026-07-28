@@ -6,7 +6,7 @@ import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <div className="text-slate-800 bg-slate-50 min-h-screen font-sans">
         <App />
       </div>

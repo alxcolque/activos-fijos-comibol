@@ -4,7 +4,7 @@
     "name": "Ing. Paula Flores",
     "email": "paula@comibol.gob.bo",
     "role": "Administrador de Activos",
-    "avatar": "../public/avatar/paula.jpeg",
+    "avatar": "avatar/paula.jpeg",
     "department": "Dirección de Activos Fijos - La Paz"
   },
   "roles": [
