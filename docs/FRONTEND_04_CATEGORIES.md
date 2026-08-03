@@ -1,6 +1,6 @@
 # Módulo de Categorías de Activos Fijos
 **Documento:** FRONTEND_04_CATEGORIES.md  
-**Versión:** 1.0.0  
+**Versión:** 1.0.1  
 **Proyecto:** Client Frontend Activos Fijos COMIBOL  
 **Módulo:** Gestión de Categorías y Catálogo Patrimonial  
 **Fecha:** Agosto 2026  
@@ -9,7 +9,7 @@
 
 # 1. Objetivo
 
-Especificar la implementación técnica del módulo de **Categorías de Activos** (`/categories`) para administrar el catálogo de familias de activos de COMIBOL (Maquinaria Pesada, Equipos de Computación, Vehículos, Muebles y Enseres, etc.). Permite consultar, crear, editar y eliminar categorías mediante modales reactivos.
+Especificar la implementación técnica del módulo de **Categorías de Activos** (`/categories`) para administrar el catálogo de familias de activos de COMIBOL (Maquinaria Pesada, Equipos de Computación, Vehículos, Muebles y Enseres, etc.). Permite consultar, crear, editar y eliminar categorías mediante modales reactivos utilizando exclusivamente los campos `name` y `description`.
 
 ---
 
@@ -30,11 +30,8 @@ Especificar la implementación técnica del módulo de **Categorías de Activos*
 ```typescript
 export interface AssetCategory {
   id: string;
-  code: string;
   name: string;
   description?: string | null;
-  usefulLifeYears?: number | null;
-  depreciationRate?: number | null;
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -43,11 +40,8 @@ export interface AssetCategory {
 }
 
 export interface CreateCategoryDTO {
-  code: string;
   name: string;
   description?: string;
-  usefulLifeYears?: number;
-  depreciationRate?: number;
 }
 
 export interface UpdateCategoryDTO extends Partial<CreateCategoryDTO> {}
@@ -124,9 +118,9 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
 
 ### Vistas y Modales:
 1. **Tabla de Categorías (`DataTable`):**
-   - Columnas: Código, Nombre de Categoría, Descripción, Vida Útil (Años), % Depreciación Anual, Total Activos Asociados, Acciones.
+   - Columnas: Nombre de Categoría, Descripción, Total Activos Asociados, Acciones.
 2. **Modal Formulario Categoría (`CategoryFormModal.tsx`):**
-   - Inputs para `code`, `name`, `description`, `usefulLifeYears`, `depreciationRate`.
+   - Inputs exclusivamente para `name` y `description`.
    - Validaciones de campos obligatorios antes de enviar.
 3. **Modal de Confirmación de Eliminación (`ConfirmDialog`):**
    - Muestra advertencia si la categoría contiene activos registrados impidiendo la eliminación física.
@@ -135,7 +129,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
 
 # 6. Criterios de Aceptación
 
+- [ ] Formulario CRUD únicamente con los campos `name` y `description`.
 - [ ] Listado de categorías renderizado desde `GET /api/v1/categories`.
 - [ ] Creación y edición reactiva mediante modal sin recargar la página.
-- [ ] Validación de código único en el formulario.
 - [ ] Feedback con alertas visuales de éxito o error en peticiones HTTP.

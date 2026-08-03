@@ -1,5 +1,6 @@
 export * from './api-response.interface';
 export * from './auth.interface';
+export * from './category.interface';
 export * from './asset.interface';
 export * from './project.interface';
 export * from './location.interface';

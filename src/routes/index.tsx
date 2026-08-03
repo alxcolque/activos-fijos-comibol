@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import Dashboard from '../pages/Dashboard';
+import CategoriesPage from '../pages/Categories';
 import AssetsList from '../pages/AssetsList';
 import AssetDetail from '../pages/AssetDetail';
 import AssetForm from '../pages/AssetForm';
@@ -27,6 +28,7 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="categories" element={<CategoriesPage />} />
         <Route path="assets" element={<AssetsList />} />
         <Route path="assets/new" element={<AssetForm />} />
         <Route path="assets/:id" element={<AssetDetail />} />
