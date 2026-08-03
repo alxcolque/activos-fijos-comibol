@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 export const Header: React.FC = () => {
   const { toggleMobileDrawer } = useUIStore();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const [notifOpen, setNotifOpen] = useState(false);
@@ -93,8 +93,8 @@ export const Header: React.FC = () => {
             >
               <img
                 className="w-8 h-8 rounded-full border-2 border-amber-500 object-cover hover:opacity-90 transition-opacity"
-                src={getAssetUrl(user.avatar)}
-                alt={user.name}
+                src={getAssetUrl(user.avatar || 'avatars/admin.svg')}
+                alt={user.fullName || user.name || 'Administrador'}
               />
             </button>
 
@@ -118,20 +118,14 @@ export const Header: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setProfileOpen(false)}
-                    className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    Centro de Ayuda
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => {
                       setProfileOpen(false);
-                      alert('Cierre de sesión simulado.');
+                      logout();
+                      navigate('/login');
                     }}
                     className="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors border-t border-slate-100"
                   >
-                    Cerrar Sesión (Simulado)
+                    Cerrar Sesión
                   </button>
                 </div>
               </div>

@@ -1,3 +1,14 @@
+export * from './api-response.interface';
+export * from './auth.interface';
+export * from './asset.interface';
+export * from './project.interface';
+export * from './location.interface';
+export * from './assignment.interface';
+export * from './maintenance.interface';
+export * from './report.interface';
+export * from './setting.interface';
+
+// Legacy compatibility definitions
 export interface User {
   id: string;
   name: string;

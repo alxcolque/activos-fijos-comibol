@@ -43,6 +43,10 @@ export const MainLayout: React.FC = () => {
     { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth },
   ];
 
+  const userName = user?.fullName || user?.name || 'Administrador';
+  const userRole = user?.role || 'Administrador COMIBOL';
+  const userAvatar = getAssetUrl(user?.avatar || 'avatars/admin.svg');
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased relative">
       {/* Sidebar de Escritorio */}
@@ -115,13 +119,13 @@ export const MainLayout: React.FC = () => {
             {user && (
               <div className="p-4 border-t border-blue-750 bg-blue-800 flex items-center gap-3 shrink-0">
                 <img 
-                  src={getAssetUrl(user.avatar)} 
+                  src={userAvatar} 
                   className="w-10 h-10 rounded-full border-2 border-amber-500 object-cover shrink-0"
-                  alt={user.name} 
+                  alt={userName} 
                 />
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-white truncate">{user.name}</span>
-                  <span className="text-[10px] font-semibold text-blue-200 truncate">{user.role}</span>
+                  <span className="text-xs font-bold text-white truncate">{userName}</span>
+                  <span className="text-[10px] font-semibold text-blue-200 truncate">{userRole}</span>
                 </div>
               </div>
             )}

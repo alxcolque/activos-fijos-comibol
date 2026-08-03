@@ -24,6 +24,10 @@ export const Sidebar: React.FC = () => {
     { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth },
   ];
 
+  const userName = user?.fullName || user?.name || 'Administrador';
+  const userRole = user?.role || 'Administrador COMIBOL';
+  const userAvatar = getAssetUrl(user?.avatar || 'avatars/admin.svg');
+
   return (
     <aside 
       className={`hidden md:flex flex-col border-r border-blue-800 bg-blue-600 h-screen sticky top-0 transition-all duration-300 z-30 ${
@@ -98,15 +102,15 @@ export const Sidebar: React.FC = () => {
         <div className="p-4 border-t border-blue-700 bg-blue-800 shrink-0">
           <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center' : ''}`}>
             <img 
-              src={getAssetUrl(user.avatar)} 
+              src={userAvatar} 
               className="w-9 h-9 rounded-full border-2 border-amber-500 object-cover shrink-0"
-              alt={user.name}
-              title={user.name}
+              alt={userName}
+              title={userName}
             />
             {!sidebarCollapsed && (
               <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-white truncate">{user.name}</span>
-                <span className="text-[10px] font-semibold text-blue-200 truncate">{user.role}</span>
+                <span className="text-xs font-bold text-white truncate">{userName}</span>
+                <span className="text-[10px] font-semibold text-blue-200 truncate">{userRole}</span>
               </div>
             )}
           </div>

@@ -8,11 +8,24 @@ import AssetForm from '../pages/AssetForm';
 import Reports from '../pages/Reports';
 import Settings from '../pages/Settings';
 import NotFound from '../pages/NotFound';
+import LoginPage from '../pages/LoginPage';
+import ProtectedRoute from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<MainLayout />}>
+      {/* Ruta Pública: Login */}
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* Rutas Protegidas */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Dashboard />} />
         <Route path="assets" element={<AssetsList />} />
         <Route path="assets/new" element={<AssetForm />} />
