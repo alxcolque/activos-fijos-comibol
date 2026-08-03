@@ -8,6 +8,7 @@ import {
   HiOutlineSquares2X2, 
   HiOutlineBriefcase, 
   HiOutlineTag,
+  HiOutlineCheckCircle,
   HiOutlineDocumentChartBar, 
   HiOutlineCog6Tooth 
 } from 'react-icons/hi2';
@@ -22,6 +23,7 @@ export const Sidebar: React.FC = () => {
     { name: 'Dashboard', path: '/', icon: HiOutlineSquares2X2 },
     { name: 'Activos', path: '/assets', icon: HiOutlineBriefcase },
     { name: 'Categorías', path: '/categories', icon: HiOutlineTag },
+    { name: 'Estados', path: '/statuses', icon: HiOutlineCheckCircle },
     { name: 'Reportes', path: '/reports', icon: HiOutlineDocumentChartBar },
     { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth },
   ];
