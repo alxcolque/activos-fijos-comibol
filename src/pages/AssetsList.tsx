@@ -1,217 +1,154 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAssetStore } from '../store/assetStore';
-import { useDashboardStore } from '../store/dashboardStore';
+import type { AssetModel } from '../interfaces/asset.interface';
 import { PageTitle } from '../components/PageTitle';
-import { DataTable } from '../components/DataTable';
 import { StatusBadge } from '../components/StatusBadge';
 import { QRBadge } from '../components/QRBadge';
 import { AssetCard } from '../components/AssetCard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { SearchBar } from '../components/SearchBar';
 
-import { 
-  HiOutlineMagnifyingGlass,
+import {
   HiOutlineEye,
   HiOutlinePencilSquare,
   HiOutlineTrash,
   HiOutlineSquares2X2,
   HiOutlineListBullet,
-  HiOutlineArrowPath
+  HiOutlineArrowPath,
+  HiPlus,
 } from 'react-icons/hi2';
-import { useNavigate } from 'react-router-dom';
-import type { Asset } from '../interfaces';
 
 export const AssetsList: React.FC = () => {
   const navigate = useNavigate();
-  const { assets, categories, locations, custodians, deleteAsset } = useAssetStore();
-  const { addActivity } = useDashboardStore();
+  const {
+    assets,
+    categories,
+    statuses,
+    locations,
+    isLoading,
+    error,
+    fetchAssets,
+    fetchInitialData,
+    deleteAsset,
+  } = useAssetStore();
 
-  // Estados de filtros
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
-  const [selectedCustodian, setSelectedCustodian] = useState<string>('');
-  
-  // Vista: tabla o tarjetas
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
-  // Diálogo de eliminación
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
+  const [assetToDelete, setAssetToDelete] = useState<AssetModel | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
-  // Limpiar filtros
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  useEffect(() => {
+    fetchAssets({
+      search: search || undefined,
+      categoryId: selectedCategory || undefined,
+      statusId: selectedStatus || undefined,
+      locationId: selectedLocation || undefined,
+    });
+  }, [search, selectedCategory, selectedStatus, selectedLocation]);
+
+  const showNotification = (type: 'success' | 'danger', text: string) => {
+    setToastMessage({ type, text });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
   const handleClearFilters = () => {
     setSearch('');
     setSelectedCategory('');
     setSelectedStatus('');
-    setSelectedCustodian('');
+    setSelectedLocation('');
   };
 
-  // Filtrado de datos
-  const filteredAssets = useMemo(() => {
-    return assets.filter(asset => {
-      const matchSearch = 
-        asset.name.toLowerCase().includes(search.toLowerCase()) ||
-        asset.code.toLowerCase().includes(search.toLowerCase()) ||
-        asset.brand.toLowerCase().includes(search.toLowerCase()) ||
-        asset.model.toLowerCase().includes(search.toLowerCase()) ||
-        asset.serialNumber.toLowerCase().includes(search.toLowerCase());
-
-      const matchCategory = selectedCategory ? asset.categoryId === selectedCategory : true;
-      const matchStatus = selectedStatus ? asset.status === selectedStatus : true;
-      const matchCustodian = selectedCustodian ? asset.custodianId === selectedCustodian : true;
-
-      return matchSearch && matchCategory && matchStatus && matchCustodian;
-    });
-  }, [assets, search, selectedCategory, selectedStatus, selectedCustodian]);
-
-  // Manejar eliminación
-  const handleDeleteRequest = (asset: Asset, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevenir navegación
+  const handleDeleteRequest = (asset: AssetModel, e: React.MouseEvent) => {
+    e.stopPropagation();
     setAssetToDelete(asset);
     setDeleteConfirmOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (assetToDelete) {
-      deleteAsset(assetToDelete.id);
-      addActivity({
-        user: "Ing. Carlos Mendoza",
-        action: "Eliminó activo",
-        target: `${assetToDelete.name} (${assetToDelete.code})`,
-        type: 'danger'
-      });
+  const handleDeleteConfirm = async () => {
+    if (!assetToDelete) return;
+    try {
+      await deleteAsset(assetToDelete.id);
+      showNotification('success', 'Activo fijo eliminado correctamente.');
+      setAssetToDelete(null);
+    } catch (err: any) {
+      showNotification('danger', err.message || 'No se pudo eliminar el activo.');
       setAssetToDelete(null);
     }
   };
 
-  // Definición de columnas de la tabla
-  const columns = [
-    { key: 'code', label: 'Código' },
-    { key: 'qr', label: 'Código QR' },
-    { key: 'name', label: 'Nombre' },
-    { key: 'category', label: 'Categoría' },
-    { key: 'location', label: 'Ubicación' },
-    { key: 'custodian', label: 'Responsable' },
-    { key: 'status', label: 'Estado' },
-    { key: 'value', label: 'Valor' },
-    { key: 'actions', label: 'Acciones' },
-  ];
-
-  // Renderizador de celdas
-  const renderCell = (item: Asset, columnKey: React.Key) => {
-    switch (columnKey) {
-      case 'code':
-        return <span className="font-mono text-xs font-bold text-slate-500">{item.code}</span>;
-      case 'qr':
-        return <QRBadge value={item.code} size={50} />;
-      case 'name':
-        return (
-          <div className="flex flex-col">
-            <span className="font-bold text-slate-800 text-sm line-clamp-1">{item.name}</span>
-            <span className="text-[10px] text-slate-400 font-semibold">{item.brand} - {item.model}</span>
-          </div>
-        );
-      case 'category':
-        const cat = categories.find(c => c.id === item.categoryId);
-        return <span className="text-xs font-semibold text-slate-600">{cat?.name || 'Sin Categoría'}</span>;
-      case 'location':
-        const loc = locations.find(l => l.id === item.locationId);
-        return <span className="text-xs text-slate-500 font-medium">{loc?.name || 'Sin Ubicación'}</span>;
-      case 'custodian':
-        const custodian = custodians.find(c => c.id === item.custodianId);
-        return <span className="text-xs text-slate-600 font-medium">{custodian?.name || 'Sin Asignar'}</span>;
-      case 'status':
-        return <StatusBadge status={item.status} />;
-      case 'value':
-        const formattedVal = new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD'
-        }).format(item.value);
-        return <span className="font-bold text-slate-800 text-sm">{formattedVal}</span>;
-      case 'actions':
-        return (
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => navigate(`/assets/${item.id}`)}
-              title="Ver Detalle"
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-amber-600 transition-colors shrink-0"
-            >
-              <HiOutlineEye className="text-lg" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(`/assets/${item.id}/edit`)}
-              title="Editar Activo"
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-blue-600 transition-colors shrink-0"
-            >
-              <HiOutlinePencilSquare className="text-lg" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => handleDeleteRequest(item, e)}
-              title="Eliminar Activo"
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-rose-600 transition-colors shrink-0"
-            >
-              <HiOutlineTrash className="text-lg" />
-            </button>
-          </div>
-        );
-      default:
-        return null;
-    }
+  const formatCurrency = (val?: number | null) => {
+    if (val == null) return '—';
+    return new Intl.NumberFormat('es-BO', {
+      style: 'currency',
+      currency: 'BOB',
+    }).format(val);
   };
 
   return (
     <div className="space-y-6">
-      <PageTitle 
-        title="Control de Activos Fijos" 
-        subtitle="Catálogo institucional y registro de activos fijos de la corporación"
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed top-5 right-5 z-50 p-4 rounded-2xl shadow-xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${
+            toastMessage.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}
+        >
+          {toastMessage.text}
+        </div>
+      )}
+
+      <PageTitle
+        title="Control de Activos Fijos"
+        subtitle="Catálogo institucional y registro de activos fijos patrimoniales de COMIBOL"
         action={
-          <button 
+          <button
             type="button"
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl font-bold shadow-md shadow-amber-500/20 active:scale-[0.98] transition-all text-sm shrink-0"
+            className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 rounded-xl font-bold text-xs shadow-sm transition-all shrink-0"
             onClick={() => navigate('/assets/new')}
           >
-            Nuevo Activo
+            <HiPlus className="text-base" />
+            <span>Nuevo Activo</span>
           </button>
         }
       />
 
       {/* Contenedor de Filtros */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm space-y-4">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Buscador */}
-          <div className="lg:col-span-2 relative">
-            <input
-              type="text"
-              placeholder="Buscar por código, nombre, marca..."
+          <div className="lg:col-span-2">
+            <SearchBar
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-8 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm transition-colors h-9"
+              onChange={setSearch}
+              placeholder="Buscar por código, nombre, marca o modelo..."
             />
-            <HiOutlineMagnifyingGlass className="absolute left-3 top-2.5 text-slate-400 text-lg pointer-events-none" />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 font-bold text-xs"
-              >
-                ✕
-              </button>
-            )}
           </div>
 
           {/* Categoría */}
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm bg-white cursor-pointer transition-colors h-9"
+            className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-semibold text-xs bg-slate-50 transition-colors"
           >
-            <option value="">Todas las Categorías</option>
+            <option value="">-- Todas las Categorías --</option>
             {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
             ))}
           </select>
 
@@ -219,66 +156,65 @@ export const AssetsList: React.FC = () => {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm bg-white cursor-pointer transition-colors h-9"
+            className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-semibold text-xs bg-slate-50 transition-colors"
           >
-            <option value="">Todos los Estados</option>
-            <option value="Operativo">Operativo</option>
-            <option value="En mantenimiento">En mantenimiento</option>
-            <option value="En stock">En stock</option>
-            <option value="De baja">De baja</option>
+            <option value="">-- Todos los Estados --</option>
+            {statuses.map((st) => (
+              <option key={st.id} value={st.id}>
+                {st.name}
+              </option>
+            ))}
           </select>
 
-          {/* Custodio */}
+          {/* Ubicación */}
           <select
-            value={selectedCustodian}
-            onChange={(e) => setSelectedCustodian(e.target.value)}
-            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm bg-white cursor-pointer transition-colors h-9"
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-semibold text-xs bg-slate-50 transition-colors"
           >
-            <option value="">Todos los Responsables</option>
-            {custodians.map((cust) => (
-              <option key={cust.id} value={cust.id}>{cust.name}</option>
+            <option value="">-- Todas las Ubicaciones --</option>
+            {locations.map((loc) => (
+              <option key={loc.id} value={loc.id}>
+                {loc.name}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Acciones del filtro y cambio de Vista */}
+        {/* Bar de Acciones y Cambio de Vista */}
         <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-          <div className="flex items-center gap-2">
-            {(search || selectedCategory || selectedStatus || selectedCustodian) && (
-              <button 
+          <div className="flex items-center gap-3">
+            {(search || selectedCategory || selectedStatus || selectedLocation) && (
+              <button
                 type="button"
                 onClick={handleClearFilters}
                 className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors"
               >
                 <HiOutlineArrowPath className="text-xs" />
-                Limpiar Filtros
+                <span>Limpiar Filtros</span>
               </button>
             )}
-            <span className="text-xs font-semibold text-slate-400">
-              {filteredAssets.length} activo(s) encontrado(s)
+            <span className="text-xs font-semibold text-slate-500">
+              Total: <span className="font-bold text-slate-800">{assets.length}</span> activo(s)
             </span>
           </div>
 
-          {/* Selector de tipo de Vista */}
-          <div className="flex items-center border border-slate-200 rounded-lg p-0.5 bg-slate-50">
-            <button 
+          {/* Selector de Vista */}
+          <div className="flex items-center border border-slate-200 rounded-xl p-1 bg-slate-50">
+            <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md text-sm transition-all ${
-                viewMode === 'table' 
-                  ? 'bg-white text-slate-800 shadow-sm font-bold' 
-                  : 'text-slate-400 hover:text-slate-600'
+              className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'table' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <HiOutlineListBullet className="text-base" />
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => setViewMode('cards')}
-              className={`p-1.5 rounded-md text-sm transition-all ${
-                viewMode === 'cards' 
-                  ? 'bg-white text-slate-800 shadow-sm font-bold' 
-                  : 'text-slate-400 hover:text-slate-600'
+              className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'cards' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <HiOutlineSquares2X2 className="text-base" />
@@ -287,8 +223,16 @@ export const AssetsList: React.FC = () => {
         </div>
       </div>
 
-      {/* Renderizado de datos */}
-      {filteredAssets.length === 0 ? (
+      {/* Carga o Contenido */}
+      {isLoading && assets.length === 0 ? (
+        <div className="py-16">
+          <LoadingSpinner label="Cargando inventario de activos fijos..." />
+        </div>
+      ) : error ? (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-semibold text-rose-600 text-center">
+          {error}
+        </div>
+      ) : assets.length === 0 ? (
         <EmptyState
           title="Sin activos encontrados"
           description="Intente modificar sus criterios de búsqueda o filtros para encontrar el activo que busca."
@@ -296,29 +240,103 @@ export const AssetsList: React.FC = () => {
           onAction={handleClearFilters}
         />
       ) : viewMode === 'table' ? (
-        <DataTable
-          columns={columns}
-          items={filteredAssets}
-          renderCell={renderCell}
-          rowsPerPage={10}
-        />
+        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3.5 w-14 text-center">N°</th>
+                  <th className="px-6 py-3.5">Código</th>
+                  <th className="px-6 py-3.5 text-center">QR</th>
+                  <th className="px-6 py-3.5">Nombre del Activo</th>
+                  <th className="px-6 py-3.5">Categoría</th>
+                  <th className="px-6 py-3.5">Ubicación</th>
+                  <th className="px-6 py-3.5 text-center">Estado</th>
+                  <th className="px-6 py-3.5 text-right">Valor Compra</th>
+                  <th className="px-6 py-3.5 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {assets.map((item, index) => (
+                  <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-6 py-4 text-center font-bold text-slate-400">{index + 1}</td>
+                    <td className="px-6 py-4 font-mono font-bold text-amber-600">{item.code}</td>
+                    <td className="px-6 py-4 text-center">
+                      <QRBadge value={item.qrCode || item.code} size={40} />
+                    </td>
+                    <td className="px-6 py-4 font-bold text-slate-800">
+                      <div className="flex flex-col">
+                        <span>{item.name}</span>
+                        {(item.brand || item.model) && (
+                          <span className="text-[11px] font-normal text-slate-400">
+                            {item.brand} {item.model ? `- ${item.model}` : ''}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-slate-600">
+                      {item.category?.name || 'Sin Categoría'}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-slate-600">
+                      {item.location?.name || 'Sin Ubicación'}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <StatusBadge status={item.status?.name || 'Desconocido'} />
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-slate-800">
+                      {formatCurrency(item.purchaseValue)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/assets/${item.id}`)}
+                          title="Ver Ficha Técnica"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                        >
+                          <HiOutlineEye className="text-base" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/assets/${item.id}/edit`)}
+                          title="Editar Activo"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          <HiOutlinePencilSquare className="text-base" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteRequest(item, e)}
+                          title="Eliminar Activo"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        >
+                          <HiOutlineTrash className="text-base" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {filteredAssets.map(asset => (
-            <AssetCard key={asset.id} asset={asset} />
+          {assets.map((asset) => (
+            <AssetCard key={asset.id} asset={asset as any} />
           ))}
         </div>
       )}
 
-      {/* Confirmación de eliminación */}
+      {/* Modal Confirmación de Eliminación */}
       <ConfirmDialog
         isOpen={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
         onConfirm={handleDeleteConfirm}
-        title="Eliminar Activo Fijo"
-        message={`¿Está seguro de que desea eliminar el activo "${assetToDelete?.name}" (${assetToDelete?.code})? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        title="¿Eliminar Activo Fijo?"
+        message={`¿Está seguro de eliminar el activo "${assetToDelete?.name}" (${assetToDelete?.code})? Esta acción no se puede deshacer.`}
+        confirmText="Sí, Eliminar"
+        color="danger"
       />
     </div>
   );

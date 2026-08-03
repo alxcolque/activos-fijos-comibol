@@ -1,76 +1,98 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAssetStore } from '../store/assetStore';
-import { useDashboardStore } from '../store/dashboardStore';
 import { SectionCard } from '../components/SectionCard';
 import { AssetImage } from '../components/AssetImage';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 import { HiOutlineArrowLeft, HiOutlineCheck } from 'react-icons/hi2';
-import type { Asset } from '../interfaces';
 
 export const AssetForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { assets, categories, locations, custodians, addAsset, updateAsset } = useAssetStore();
-  const { addActivity } = useDashboardStore();
+  const {
+    selectedAsset,
+    categories,
+    statuses,
+    locations,
+    isLoading,
+    fetchAssetById,
+    fetchInitialData,
+    createAsset,
+    updateAsset,
+  } = useAssetStore();
 
   const isEditMode = !!id;
-  const existingAsset = isEditMode ? assets.find(a => a.id === id) : null;
 
-  // Form State
   const [formData, setFormData] = useState({
     code: '',
     name: '',
     categoryId: '',
+    statusId: '',
     locationId: '',
-    custodianId: '',
-    status: 'Operativo' as Asset['status'],
-    value: 0,
-    purchaseDate: new Date().toISOString().split('T')[0],
     brand: '',
     model: '',
     serialNumber: '',
+    unit: 'PZA',
+    quantity: 1,
+    purchaseDate: new Date().toISOString().split('T')[0],
+    purchaseValue: 1,
+    usefulLife: 5,
+    residualValue: 1,
+    description: '',
     observations: '',
-    image: ''
+    photo: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Cargar datos del activo si estamos en modo edición
   useEffect(() => {
-    if (isEditMode && existingAsset) {
-      setFormData({
-        code: existingAsset.code,
-        name: existingAsset.name,
-        categoryId: existingAsset.categoryId,
-        locationId: existingAsset.locationId,
-        custodianId: existingAsset.custodianId,
-        status: existingAsset.status,
-        value: existingAsset.value,
-        purchaseDate: existingAsset.purchaseDate,
-        brand: existingAsset.brand,
-        model: existingAsset.model,
-        serialNumber: existingAsset.serialNumber,
-        observations: existingAsset.observations,
-        image: existingAsset.image
-      });
-    } else if (!isEditMode) {
-      // Auto-generar un código sugerido en modo creación
-      const randomSeq = Math.floor(100 + Math.random() * 900);
-      setFormData(prev => ({
+    fetchInitialData();
+  }, []);
+
+  useEffect(() => {
+    if (isEditMode && id) {
+      fetchAssetById(id);
+    } else {
+      const seq = Math.floor(1000 + Math.random() * 9000);
+      setFormData((prev) => ({
         ...prev,
-        code: `COM-ACT-${randomSeq}`
+        code: `AF-${seq}`,
       }));
     }
-  }, [id, existingAsset, isEditMode]);
+  }, [id, isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode && selectedAsset) {
+      setFormData({
+        code: selectedAsset.code || '',
+        name: selectedAsset.name || '',
+        categoryId: selectedAsset.categoryId || '',
+        statusId: selectedAsset.statusId || '',
+        locationId: selectedAsset.locationId || '',
+        brand: selectedAsset.brand || '',
+        model: selectedAsset.model || '',
+        serialNumber: selectedAsset.serialNumber || '',
+        unit: selectedAsset.unit || 'PZA',
+        quantity: selectedAsset.quantity || 1,
+        purchaseDate: selectedAsset.purchaseDate ? selectedAsset.purchaseDate.split('T')[0] : '',
+        purchaseValue: selectedAsset.purchaseValue || 0,
+        usefulLife: selectedAsset.usefulLife || 5,
+        residualValue: selectedAsset.residualValue || 0,
+        description: selectedAsset.description || '',
+        observations: selectedAsset.observations || '',
+        photo: selectedAsset.photo || '',
+      });
+    }
+  }, [selectedAsset, isEditMode]);
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    // Limpiar error del campo
     if (errors[field]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const copy = { ...prev };
         delete copy[field];
         return copy;
@@ -80,55 +102,73 @@ export const AssetForm: React.FC = () => {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.code.trim()) newErrors.code = 'El código es requerido';
-    if (!formData.name.trim()) newErrors.name = 'El nombre es requerido';
-    if (!formData.categoryId) newErrors.categoryId = 'Seleccione una categoría';
-    if (!formData.locationId) newErrors.locationId = 'Seleccione una ubicación';
-    if (!formData.custodianId) newErrors.custodianId = 'Seleccione un custodio responsable';
-    if (formData.value <= 0) newErrors.value = 'El valor debe ser mayor a 0';
-    if (!formData.purchaseDate) newErrors.purchaseDate = 'La fecha de compra es requerida';
+    if (!formData.code.trim()) newErrors.code = 'El código es obligatorio.';
+    if (!formData.name.trim()) newErrors.name = 'El nombre es obligatorio.';
+    if (!formData.categoryId) newErrors.categoryId = 'Seleccione una categoría.';
+    if (!formData.statusId) newErrors.statusId = 'Seleccione un estado técnico.';
+    if (!formData.locationId) newErrors.locationId = 'Seleccione una ubicación.';
+    if (formData.quantity <= 0) newErrors.quantity = 'La cantidad debe ser mayor a 0.';
+    if (formData.purchaseValue < 0) newErrors.purchaseValue = 'El valor de compra debe ser mayor o igual a 0.';
+    if (formData.usefulLife <= 0) newErrors.usefulLife = 'La vida útil debe ser mayor a 0.';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     if (!validate()) return;
 
-    if (isEditMode && existingAsset) {
-      const updated: Asset = {
-        ...formData,
-        id: existingAsset.id
+    try {
+      const payload = {
+        code: formData.code.trim(),
+        name: formData.name.trim(),
+        categoryId: formData.categoryId,
+        statusId: formData.statusId,
+        locationId: formData.locationId,
+        brand: formData.brand.trim() || undefined,
+        model: formData.model.trim() || undefined,
+        serialNumber: formData.serialNumber.trim() || undefined,
+        unit: formData.unit.trim() || 'PZA',
+        quantity: Number(formData.quantity),
+        purchaseDate: formData.purchaseDate || undefined,
+        purchaseValue: Number(formData.purchaseValue),
+        usefulLife: Number(formData.usefulLife),
+        residualValue: Number(formData.residualValue) || undefined,
+        description: formData.description.trim() || undefined,
+        observations: formData.observations.trim() || undefined,
+        photo: formData.photo.trim() || undefined,
       };
-      updateAsset(updated);
-      addActivity({
-        user: "Ing. Carlos Mendoza",
-        action: "Actualizó activo",
-        target: `${updated.name} (${updated.code})`,
-        type: 'info'
-      });
-      navigate(`/assets/${existingAsset.id}`);
-    } else {
-      addAsset(formData);
-      addActivity({
-        user: "Ing. Carlos Mendoza",
-        action: "Registró activo",
-        target: `${formData.name} (${formData.code})`,
-        type: 'success'
-      });
-      navigate('/assets');
+
+      if (isEditMode && id) {
+        await updateAsset(id, payload);
+        navigate(`/assets/${id}`);
+      } else {
+        await createAsset(payload);
+        navigate('/assets');
+      }
+    } catch (err: any) {
+      setSubmitError(err.message || 'Ocurrió un error al guardar el activo fijo.');
     }
   };
 
+  if (isEditMode && isLoading && !selectedAsset) {
+    return (
+      <div className="py-20">
+        <LoadingSpinner label="Cargando formulario de edición..." />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Botón de retroceso y título */}
+      {/* Encabezado */}
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => navigate(isEditMode ? `/assets/${id}` : '/assets')}
-          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors shrink-0"
+          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors shrink-0"
         >
           <HiOutlineArrowLeft className="text-xl" />
         </button>
@@ -137,239 +177,301 @@ export const AssetForm: React.FC = () => {
             {isEditMode ? 'Editar Activo Fijo' : 'Nuevo Activo Fijo'}
           </h1>
           <p className="text-xs text-slate-500 font-semibold mt-0.5">
-            {isEditMode ? 'Modificar datos del registro en el sistema' : 'Registrar nueva adquisición en la base de datos'}
+            {isEditMode
+              ? 'Modificar datos del activo patrimonial'
+              : 'Registrar nueva incorporación al inventario corporativo'}
           </p>
         </div>
       </div>
 
+      {submitError && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-rose-700">
+          {submitError}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Columna Izquierda: Imagen y Previsualización */}
+        {/* Columna Previsualización Fotográfica */}
         <div className="lg:col-span-1 space-y-6">
-          <SectionCard title="Previsualización de Imagen">
+          <SectionCard title="Fotografía del Activo">
             <div className="flex flex-col gap-4 items-center">
-              <div className="w-full aspect-[4/3] rounded-xl overflow-hidden shadow-sm bg-slate-100 shrink-0">
-                <AssetImage 
-                  src={formData.image} 
-                  alt={formData.name || 'Previsualización'} 
-                  categoryId={formData.categoryId} 
+              <div className="w-full aspect-[4/3] rounded-xl overflow-hidden shadow-xs bg-slate-100 shrink-0">
+                <AssetImage
+                  src={formData.photo}
+                  alt={formData.name || 'Previsualización'}
+                  categoryId={formData.categoryId}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="w-full space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Enlace de fotografía</label>
+                <label className="text-xs font-bold text-slate-700 block">URL de Fotografía</label>
                 <input
                   type="text"
-                  placeholder="Pegar URL de imagen (opcional)"
-                  value={formData.image}
-                  onChange={(e) => handleInputChange('image', e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm transition-colors h-9 bg-white"
+                  placeholder="Pegar URL de la imagen..."
+                  value={formData.photo}
+                  onChange={(e) => handleInputChange('photo', e.target.value)}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-xs bg-slate-50 transition-colors"
                 />
               </div>
               <span className="text-[10px] text-slate-400 font-semibold text-center leading-relaxed">
-                Puede pegar un enlace de Unsplash o cualquier servidor de imágenes para previsualizar la fotografía.
+                Puede proporcionar el enlace HTTPS de una imagen para previsualización en el expediente.
               </span>
             </div>
           </SectionCard>
         </div>
 
-        {/* Columna Derecha: Formulario Técnico */}
+        {/* Columna Datos del Formulario */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Sección 1: Información Principal */}
-          <SectionCard title="Información Principal">
+          {/* Datos Principales */}
+          <SectionCard title="Datos Principales de Inventario">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Código de Activo <span className="text-rose-500">*</span></label>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Código Patrimonial <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Ej. COM-MP-001"
+                  placeholder="Ej. AF-00102"
                   value={formData.code}
                   onChange={(e) => handleInputChange('code', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none font-medium text-sm transition-colors h-9 bg-white ${
-                    errors.code ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                  }`}
+                  required
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-mono font-bold bg-slate-50 transition-colors ${errors.code ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
+                    }`}
                 />
-                {errors.code && <span className="text-[10px] font-semibold text-rose-500 block">{errors.code}</span>}
-              </div>
-              
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Nombre del Activo <span className="text-rose-500">*</span></label>
-                <input
-                  type="text"
-                  placeholder="Ej. Perforadora Hidráulica"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none font-medium text-sm transition-colors h-9 bg-white ${
-                    errors.name ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                  }`}
-                />
-                {errors.name && <span className="text-[10px] font-semibold text-rose-500 block">{errors.name}</span>}
+                {errors.code && <span className="text-[10px] font-bold text-rose-500 block mt-1">{errors.code}</span>}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Categoría <span className="text-rose-500">*</span></label>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Nombre del Activo <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej. Compresora Industrial Atlas Copco"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  required
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors ${errors.name ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
+                    }`}
+                />
+                {errors.name && <span className="text-[10px] font-bold text-rose-500 block mt-1">{errors.name}</span>}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Categoría <span className="text-rose-500">*</span>
+                </label>
                 <select
                   value={formData.categoryId}
                   onChange={(e) => handleInputChange('categoryId', e.target.value)}
-                  className={`w-full px-3 py-1.5 border rounded-xl focus:outline-none font-medium text-sm bg-white cursor-pointer transition-colors h-9 ${
-                    errors.categoryId ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                  }`}
+                  required
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.categoryId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
+                    }`}
                 >
-                  <option value="">Seleccione categoría</option>
+                  <option value="">-- Seleccionar Categoría --</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
                   ))}
                 </select>
-                {errors.categoryId && <span className="text-[10px] font-semibold text-rose-500 block">{errors.categoryId}</span>}
+                {errors.categoryId && <span className="text-[10px] font-bold text-rose-500 block mt-1">{errors.categoryId}</span>}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Estado Técnico <span className="text-rose-500">*</span></label>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Estado Técnico <span className="text-rose-500">*</span>
+                </label>
                 <select
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value as Asset['status'])}
-                  className="w-full px-3 py-1.5 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm bg-white cursor-pointer transition-colors h-9"
+                  value={formData.statusId}
+                  onChange={(e) => handleInputChange('statusId', e.target.value)}
+                  required
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.statusId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
+                    }`}
                 >
-                  <option value="Operativo">Operativo</option>
-                  <option value="En mantenimiento">En mantenimiento</option>
-                  <option value="En stock">En stock</option>
-                  <option value="De baja">De baja</option>
+                  <option value="">-- Seleccionar Estado --</option>
+                  {statuses.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.name}
+                    </option>
+                  ))}
                 </select>
+                {errors.statusId && <span className="text-[10px] font-bold text-rose-500 block mt-1">{errors.statusId}</span>}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Valor Adquisición (USD) <span className="text-rose-500">*</span></label>
-                <input
-                  type="number"
-                  placeholder="Ej. 15000"
-                  value={formData.value === 0 ? '' : String(formData.value)}
-                  onChange={(e) => handleInputChange('value', Number(e.target.value))}
-                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none font-medium text-sm transition-colors h-9 bg-white ${
-                    errors.value ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                  }`}
-                />
-                {errors.value && <span className="text-[10px] font-semibold text-rose-500 block">{errors.value}</span>}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Ubicación Física <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={formData.locationId}
+                  onChange={(e) => handleInputChange('locationId', e.target.value)}
+                  required
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.locationId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
+                    }`}
+                >
+                  <option value="">-- Seleccionar Ubicación --</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.locationId && <span className="text-[10px] font-bold text-rose-500 block mt-1">{errors.locationId}</span>}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Fecha de Compra <span className="text-rose-500">*</span></label>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Fecha de Adquisición
+                </label>
                 <input
                   type="date"
                   value={formData.purchaseDate}
                   onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none font-medium text-sm transition-colors h-9 bg-white ${
-                    errors.purchaseDate ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                  }`}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs bg-slate-50 transition-colors"
                 />
-                {errors.purchaseDate && <span className="text-[10px] font-semibold text-rose-500 block">{errors.purchaseDate}</span>}
               </div>
             </div>
           </SectionCard>
 
-          {/* Sección 2: Asignación e Institución */}
-          <SectionCard title="Ubicación y Responsabilidad">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Ubicación Física <span className="text-rose-500">*</span></label>
-                <select
-                  value={formData.locationId}
-                  onChange={(e) => handleInputChange('locationId', e.target.value)}
-                  className={`w-full px-3 py-1.5 border rounded-xl focus:outline-none font-medium text-sm bg-white cursor-pointer transition-colors h-9 ${
-                    errors.locationId ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                  }`}
-                >
-                  <option value="">Seleccione ubicación</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>{loc.name} ({loc.city})</option>
-                  ))}
-                </select>
-                {errors.locationId && <span className="text-[10px] font-semibold text-rose-500 block">{errors.locationId}</span>}
+          {/* Valores Económicos y Cantidades */}
+          <SectionCard title="Valores Económicos y Contables">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Valor Compra (Bs.) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  value={formData.purchaseValue}
+                  onChange={(e) => handleInputChange('purchaseValue', Number(e.target.value))}
+                  required
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors"
+                />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Responsable Custodio <span className="text-rose-500">*</span></label>
-                <select
-                  value={formData.custodianId}
-                  onChange={(e) => handleInputChange('custodianId', e.target.value)}
-                  className={`w-full px-3 py-1.5 border rounded-xl focus:outline-none font-medium text-sm bg-white cursor-pointer transition-colors h-9 ${
-                    errors.custodianId ? 'border-rose-500 focus:border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                  }`}
-                >
-                  <option value="">Seleccione custodio</option>
-                  {custodians.map((cust) => (
-                    <option key={cust.id} value={cust.id}>{cust.name}</option>
-                  ))}
-                </select>
-                {errors.custodianId && <span className="text-[10px] font-semibold text-rose-500 block">{errors.custodianId}</span>}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Vida Útil (Años) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.usefulLife}
+                  onChange={(e) => handleInputChange('usefulLife', Number(e.target.value))}
+                  required
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Valor Residual (Bs.)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  value={formData.residualValue}
+                  onChange={(e) => handleInputChange('residualValue', Number(e.target.value))}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Cantidad <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.quantity}
+                  onChange={(e) => handleInputChange('quantity', Number(e.target.value))}
+                  required
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Unidad de Medida
+                </label>
+                <input
+                  type="text"
+                  placeholder="PZA, GLOBAL, etc."
+                  value={formData.unit}
+                  onChange={(e) => handleInputChange('unit', e.target.value)}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs bg-slate-50 transition-colors"
+                />
               </div>
             </div>
           </SectionCard>
 
-          {/* Sección 3: Detalles Técnicos de Fabricación */}
-          <SectionCard title="Detalles Técnicos y Observaciones">
+          {/* Especificaciones de Fabricante y Observaciones */}
+          <SectionCard title="Especificaciones del Fabricante">
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 block">Marca</label>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Marca</label>
                   <input
                     type="text"
                     placeholder="Ej. Caterpillar"
                     value={formData.brand}
                     onChange={(e) => handleInputChange('brand', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm transition-colors h-9 bg-white"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 block">Modelo</label>
-                  <input
-                    type="text"
-                    placeholder="Ej. D10T"
-                    value={formData.model}
-                    onChange={(e) => handleInputChange('model', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm transition-colors h-9 bg-white"
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs bg-slate-50 transition-colors"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 block">Número de Serie</label>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Modelo</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. GA-90"
+                    value={formData.model}
+                    onChange={(e) => handleInputChange('model', e.target.value)}
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs bg-slate-50 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Número de Serie</label>
                   <input
                     type="text"
                     placeholder="Ej. CAT-SER-0022"
                     value={formData.serialNumber}
                     onChange={(e) => handleInputChange('serialNumber', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm transition-colors h-9 bg-white"
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs font-mono bg-slate-50 transition-colors"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 block">Observaciones Generales</label>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Observaciones</label>
                 <textarea
-                  placeholder="Agregue información técnica adicional, estado de entrega, desgaste u otros apuntes..."
+                  rows={3}
+                  placeholder="Información adicional del estado técnico..."
                   value={formData.observations}
                   onChange={(e) => handleInputChange('observations', e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-sm transition-colors bg-white"
-                  rows={4}
+                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs bg-slate-50 transition-colors resize-none"
                 />
               </div>
             </div>
           </SectionCard>
 
-          {/* Botonera de Acciones */}
+          {/* Acciones */}
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => navigate(isEditMode ? `/assets/${id}` : '/assets')}
-              className="px-4 py-2 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+              className="px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl font-bold shadow-md shadow-amber-500/25 active:scale-[0.98] transition-all text-sm shrink-0"
+              disabled={isLoading}
+              className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 rounded-xl font-bold text-xs shadow-xs transition-all disabled:opacity-50"
             >
-              <HiOutlineCheck className="text-lg font-bold" />
-              {isEditMode ? 'Guardar Cambios' : 'Registrar Activo'}
+              <HiOutlineCheck className="text-base" />
+              <span>{isLoading ? 'Guardando...' : isEditMode ? 'Guardar Cambios' : 'Registrar Activo'}</span>
             </button>
           </div>
         </div>

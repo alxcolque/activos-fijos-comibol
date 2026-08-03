@@ -1,76 +1,130 @@
 import { create } from 'zustand';
-import type { Asset, Category, Location, Custodian } from '../interfaces';
-import { getAssets, getCategories, getLocations, getCustodians } from '../services/api';
+import api from '../api/axios.instance';
+import type { AssetModel, CreateAssetDTO, UpdateAssetDTO, AssetQueryParams } from '../interfaces/asset.interface';
+import type { AssetCategory } from '../interfaces/category.interface';
+import type { AssetStatus } from '../interfaces/status.interface';
+import type { LocationNode } from '../interfaces/location.interface';
+import type { PaginationMeta } from '../interfaces/api-response.interface';
 
 interface AssetState {
-  assets: Asset[];
-  categories: Category[];
-  locations: Location[];
-  custodians: Custodian[];
-  loading: boolean;
+  assets: AssetModel[];
+  selectedAsset: AssetModel | null;
+  categories: AssetCategory[];
+  statuses: AssetStatus[];
+  locations: LocationNode[];
+  pagination: PaginationMeta | null;
+  isLoading: boolean;
   error: string | null;
-  initialized: boolean;
-  
+
+  fetchAssets: (params?: AssetQueryParams) => Promise<void>;
+  fetchAssetById: (id: string) => Promise<AssetModel | null>;
   fetchInitialData: () => Promise<void>;
-  addAsset: (asset: Omit<Asset, 'id'>) => void;
-  updateAsset: (asset: Asset) => void;
-  deleteAsset: (id: string) => void;
+  createAsset: (data: CreateAssetDTO) => Promise<AssetModel>;
+  updateAsset: (id: string, data: UpdateAssetDTO) => Promise<void>;
+  deleteAsset: (id: string) => Promise<void>;
 }
 
 export const useAssetStore = create<AssetState>((set, get) => ({
   assets: [],
+  selectedAsset: null,
   categories: [],
+  statuses: [],
   locations: [],
-  custodians: [],
-  loading: false,
+  pagination: null,
+  isLoading: false,
   error: null,
-  initialized: false,
 
-  fetchInitialData: async () => {
-    // Only load if not already initialized to prevent overwriting in-memory changes
-    if (get().initialized) return;
-
-    set({ loading: true, error: null });
+  fetchAssets: async (params) => {
+    set({ isLoading: true, error: null });
     try {
-      const [assets, categories, locations, custodians] = await Promise.all([
-        getAssets(),
-        getCategories(),
-        getLocations(),
-        getCustodians(),
-      ]);
+      const response = await api.get<{ success: boolean; data: AssetModel[]; pagination: PaginationMeta }>('/assets', {
+        params: {
+          page: params?.page,
+          limit: params?.limit || 20,
+          search: params?.search,
+          category: params?.categoryId,
+          status: params?.statusId,
+          location: params?.locationId,
+        },
+      });
       set({
-        assets,
-        categories,
-        locations,
-        custodians,
-        loading: false,
-        initialized: true,
+        assets: response.data.data,
+        pagination: response.data.pagination || null,
+        isLoading: false,
       });
     } catch (err: any) {
-      set({ error: err.message || 'Error al cargar datos de activos', loading: false });
+      set({ error: err.response?.data?.message || 'Error al cargar los activos fijos', isLoading: false });
     }
   },
 
-  addAsset: (newAssetData) => {
-    const id = `act-${Date.now()}`;
-    const newAsset: Asset = {
-      ...newAssetData,
-      id,
-    };
-    set((state) => ({
-      assets: [newAsset, ...state.assets],
-    }));
+  fetchAssetById: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.get<{ success: boolean; data: AssetModel }>(`/assets/${id}`);
+      set({ selectedAsset: response.data.data, isLoading: false });
+      return response.data.data;
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || 'Error al obtener activo fijo', isLoading: false });
+      return null;
+    }
   },
 
-  updateAsset: (updatedAsset) => {
-    set((state) => ({
-      assets: state.assets.map((a) => (a.id === updatedAsset.id ? updatedAsset : a)),
-    }));
+  fetchInitialData: async () => {
+    try {
+      const [catRes, statRes, locRes] = await Promise.all([
+        api.get<{ success: boolean; data: AssetCategory[] }>('/categories'),
+        api.get<{ success: boolean; data: AssetStatus[] }>('/statuses'),
+        api.get<{ success: boolean; data: LocationNode[] }>('/locations?limit=200'),
+      ]);
+      set({
+        categories: catRes.data.data || [],
+        statuses: statRes.data.data || [],
+        locations: locRes.data.data || [],
+      });
+    } catch (err) {
+      console.error('Error preloading metadata for assets', err);
+    }
   },
 
-  deleteAsset: (id) => {
-    set((state) => ({
-      assets: state.assets.filter((a) => a.id !== id),
-    }));
+  createAsset: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.post<{ success: boolean; data: AssetModel }>('/assets', data);
+      await get().fetchAssets();
+      return response.data.data;
+    } catch (err: any) {
+      set({ isLoading: false });
+      throw new Error(err.response?.data?.message || 'Error al crear activo fijo');
+    }
+  },
+
+  updateAsset: async (id, data) => {
+    set({ isLoading: true, error: null });
+    try {
+      try {
+        await api.put(`/assets/${id}`, data);
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          await api.patch(`/assets/${id}`, data);
+        } else {
+          throw err;
+        }
+      }
+      await get().fetchAssets();
+    } catch (err: any) {
+      set({ isLoading: false });
+      throw new Error(err.response?.data?.message || 'Error al actualizar activo fijo');
+    }
+  },
+
+  deleteAsset: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      await api.delete(`/assets/${id}`);
+      await get().fetchAssets();
+    } catch (err: any) {
+      set({ isLoading: false });
+      throw new Error(err.response?.data?.message || 'Error al eliminar activo fijo');
+    }
   },
 }));

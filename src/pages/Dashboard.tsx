@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { assets, categories, locations, fetchInitialData } = useAssetStore();
+  const { assets, categories, fetchInitialData } = useAssetStore();
   const { recentActivities, fetchDashboardData } = useDashboardStore();
 
   useEffect(() => {
@@ -23,24 +23,22 @@ export const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  // Cálculos dinámicos basados en los activos en memoria
   const totalAssets = assets.length;
   
-  const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
+  const totalValue = assets.reduce((sum, asset) => sum + (asset.purchaseValue || 0), 0);
   
-  const operationalCount = assets.filter(a => a.status === 'Operativo').length;
-  const maintenanceCount = assets.filter(a => a.status === 'En mantenimiento').length;
+  const operationalCount = assets.filter(a => a.status?.name?.toLowerCase().includes('operativo')).length;
+  const maintenanceCount = assets.filter(a => a.status?.name?.toLowerCase().includes('mantenimiento')).length;
 
-  const formattedTotalValue = new Intl.NumberFormat('en-US', {
+  const formattedTotalValue = new Intl.NumberFormat('es-BO', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BOB',
     maximumFractionDigits: 0
   }).format(totalValue);
 
-  // Agrupamiento por categorías para gráfico simulado pero con datos reales
   const categoryChartData = categories.map(cat => {
     const catAssets = assets.filter(a => a.categoryId === cat.id);
-    const valueSum = catAssets.reduce((sum, a) => sum + a.value, 0);
+    const valueSum = catAssets.reduce((sum, a) => sum + (a.purchaseValue || 0), 0);
     return {
       name: cat.name,
       count: catAssets.length,
@@ -50,7 +48,6 @@ export const Dashboard: React.FC = () => {
 
   const maxValue = Math.max(...categoryChartData.map(c => c.value), 1);
 
-  // Últimos 4 activos registrados
   const recentAssets = assets.slice(0, 4);
 
   return (
@@ -61,7 +58,7 @@ export const Dashboard: React.FC = () => {
         action={
           <button 
             type="button"
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl font-bold shadow-md shadow-amber-500/20 active:scale-[0.98] transition-all text-sm shrink-0"
+            className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 rounded-xl font-bold text-xs shadow-xs transition-all shrink-0"
             onClick={() => navigate('/assets/new')}
           >
             Nuevo Activo
@@ -112,9 +109,9 @@ export const Dashboard: React.FC = () => {
           <div className="space-y-5 py-2">
             {categoryChartData.map((data, index) => {
               const percentage = (data.value / maxValue) * 100;
-              const formattedVal = new Intl.NumberFormat('en-US', {
+              const formattedVal = new Intl.NumberFormat('es-BO', {
                 style: 'currency',
-                currency: 'USD',
+                currency: 'BOB',
                 maximumFractionDigits: 0
               }).format(data.value);
 
@@ -183,28 +180,27 @@ export const Dashboard: React.FC = () => {
                 <th className="py-2.5">Nombre</th>
                 <th className="py-2.5">Ubicación</th>
                 <th className="py-2.5">Estado</th>
-                <th className="py-2.5 text-right">Valor (USD)</th>
+                <th className="py-2.5 text-right">Valor (Bs.)</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100 text-xs">
               {recentAssets.map((asset) => {
-                const loc = locations.find(l => l.id === asset.locationId);
-                const formattedVal = new Intl.NumberFormat('en-US', {
+                const formattedVal = new Intl.NumberFormat('es-BO', {
                   style: 'currency',
-                  currency: 'USD'
-                }).format(asset.value);
+                  currency: 'BOB'
+                }).format(asset.purchaseValue || 0);
 
                 return (
                   <tr 
                     key={asset.id} 
-                    className="border-b border-slate-55 last:border-0 hover:bg-slate-50/50 cursor-pointer transition-colors"
+                    className="hover:bg-slate-50/60 cursor-pointer transition-colors"
                     onClick={() => navigate(`/assets/${asset.id}`)}
                   >
-                    <td className="py-3 text-xs font-mono font-bold text-slate-500">{asset.code}</td>
-                    <td className="py-3 text-sm font-bold text-slate-800">{asset.name}</td>
-                    <td className="py-3 text-xs font-medium text-slate-500">{loc?.name || 'Cargando...'}</td>
-                    <td className="py-3"><StatusBadge status={asset.status} /></td>
-                    <td className="py-3 text-sm font-bold text-slate-800 text-right">{formattedVal}</td>
+                    <td className="py-3 font-mono font-bold text-amber-600">{asset.code}</td>
+                    <td className="py-3 font-bold text-slate-800">{asset.name}</td>
+                    <td className="py-3 font-medium text-slate-500">{asset.location?.name || 'Sin Ubicación'}</td>
+                    <td className="py-3"><StatusBadge status={asset.status?.name || 'Operativo'} /></td>
+                    <td className="py-3 font-bold text-slate-800 text-right">{formattedVal}</td>
                   </tr>
                 );
               })}

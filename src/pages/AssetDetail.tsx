@@ -1,27 +1,40 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAssetStore } from '../store/assetStore';
 import { SectionCard } from '../components/SectionCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { QRBadge } from '../components/QRBadge';
 import { AssetImage } from '../components/AssetImage';
-import { HiOutlineArrowLeft, HiOutlinePencilSquare } from 'react-icons/hi2';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { HiOutlineArrowLeft, HiOutlinePencilSquare, HiOutlinePrinter } from 'react-icons/hi2';
 
 export const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { assets, categories, locations, custodians } = useAssetStore();
+  const { selectedAsset, isLoading, error, fetchAssetById } = useAssetStore();
 
-  const asset = assets.find(a => a.id === id);
+  useEffect(() => {
+    if (id) {
+      fetchAssetById(id);
+    }
+  }, [id]);
 
-  if (!asset) {
+  if (isLoading && !selectedAsset) {
+    return (
+      <div className="py-20">
+        <LoadingSpinner label="Cargando ficha técnica del activo..." />
+      </div>
+    );
+  }
+
+  if (error || !selectedAsset) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
         <h2 className="text-xl font-bold text-slate-800">Activo no encontrado</h2>
-        <p className="text-slate-500">El activo con ID "{id}" no está registrado en el sistema.</p>
-        <button 
+        <p className="text-xs text-slate-500">{error || `El activo con ID "${id}" no está registrado.`}</p>
+        <button
           type="button"
-          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all"
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-xl text-xs transition-all"
           onClick={() => navigate('/assets')}
         >
           Volver al listado
@@ -30,20 +43,21 @@ export const AssetDetail: React.FC = () => {
     );
   }
 
-  const category = categories.find(c => c.id === asset.categoryId);
-  const location = locations.find(l => l.id === asset.locationId);
-  const custodian = custodians.find(c => c.id === asset.custodianId);
+  const asset = selectedAsset;
 
-  const formattedValue = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(asset.value);
+  const formatCurrency = (val?: number | null) => {
+    if (val == null) return '—';
+    return new Intl.NumberFormat('es-BO', {
+      style: 'currency',
+      currency: 'BOB',
+    }).format(val);
+  };
 
-  const formattedDate = asset.purchaseDate 
+  const formattedDate = asset.purchaseDate
     ? new Date(asset.purchaseDate).toLocaleDateString('es-BO', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
       })
     : 'No especificada';
 
@@ -55,55 +69,66 @@ export const AssetDetail: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/assets')}
-            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors shrink-0"
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors shrink-0"
           >
             <HiOutlineArrowLeft className="text-xl" />
           </button>
           <div className="flex flex-col">
             <div className="flex items-center gap-3">
               <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">{asset.name}</h1>
-              <StatusBadge status={asset.status} size="sm" />
+              <StatusBadge status={asset.status?.name || 'Operativo'} size="sm" />
             </div>
-            <span className="text-xs text-slate-400 font-mono mt-0.5">{asset.code}</span>
+            <span className="text-xs text-amber-600 font-mono font-bold mt-0.5">{asset.code}</span>
           </div>
         </div>
 
-        <button
-          type="button"
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl shadow-md shadow-amber-500/20 active:scale-[0.98] transition-all text-sm shrink-0"
-          onClick={() => navigate(`/assets/${asset.id}/edit`)}
-        >
-          <HiOutlinePencilSquare className="text-lg" />
-          Editar Activo
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all"
+          >
+            <HiOutlinePrinter className="text-base" />
+            <span>Imprimir Ficha</span>
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-xl shadow-xs transition-all text-xs shrink-0"
+            onClick={() => navigate(`/assets/${asset.id}/edit`)}
+          >
+            <HiOutlinePencilSquare className="text-base" />
+            <span>Editar Activo</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Ficha Visual (Imagen + QR) */}
         <div className="md:col-span-1 flex flex-col gap-6">
           <SectionCard title="Imagen del Activo" bodyClassName="p-4 flex flex-col items-center">
-            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden shadow-sm bg-slate-100 shrink-0">
-              <AssetImage 
-                src={asset.image} 
-                alt={asset.name} 
-                categoryId={asset.categoryId} 
+            <div className="w-full aspect-[4/3] rounded-xl overflow-hidden shadow-xs bg-slate-100 shrink-0">
+              <AssetImage
+                src={asset.photo || undefined}
+                alt={asset.name}
+                categoryId={asset.categoryId}
                 className="w-full h-full object-cover"
               />
             </div>
           </SectionCard>
 
-          <SectionCard title="Código QR Único" bodyClassName="p-5 flex justify-center">
-            <QRBadge value={asset.code} size={130} />
+          <SectionCard title="Código QR Único" bodyClassName="p-5 flex flex-col items-center justify-center">
+            <QRBadge value={asset.qrCode || asset.code} size={140} />
+            <span className="text-[11px] font-mono text-slate-400 mt-2">{asset.qrCode || asset.code}</span>
           </SectionCard>
         </div>
 
         {/* Detalles Técnicos e Institucionales */}
         <div className="md:col-span-2 space-y-6">
-          <SectionCard title="Información Detallada">
+          <SectionCard title="Especificaciones Técnicas">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Código de Inventario</span>
-                <span className="text-sm font-mono font-bold text-slate-700 mt-1 block">{asset.code}</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Código Patrimonial</span>
+                <span className="text-sm font-mono font-bold text-amber-600 mt-1 block">{asset.code}</span>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Nombre del Activo</span>
@@ -111,55 +136,64 @@ export const AssetDetail: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Categoría</span>
-                <span className="text-sm font-semibold text-slate-700 mt-1 block">{category?.name || 'Cargando...'}</span>
+                <span className="text-sm font-semibold text-slate-700 mt-1 block">{asset.category?.name || 'Sin Categoría'}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Ubicación física</span>
-                <span className="text-sm font-semibold text-slate-700 mt-1 block">{location?.name || 'Cargando...'}</span>
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Responsable Custodio</span>
-                <span className="text-sm font-semibold text-slate-700 mt-1 block">{custodian?.name || 'Cargando...'}</span>
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Cargo del Custodio</span>
-                <span className="text-xs font-semibold text-slate-500 mt-1 block">{custodian?.position || 'Sin especificar'}</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Ubicación Física</span>
+                <span className="text-sm font-semibold text-slate-700 mt-1 block">{asset.location?.name || 'Sin Ubicación'}</span>
               </div>
             </div>
-            
+
             <hr className="my-6 border-t border-slate-100" />
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6">
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-5 gap-x-6">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Marca</span>
-                <span className="text-sm font-bold text-slate-700 mt-1 block">{asset.brand}</span>
+                <span className="text-sm font-bold text-slate-700 mt-1 block">{asset.brand || '—'}</span>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Modelo</span>
-                <span className="text-sm font-bold text-slate-700 mt-1 block">{asset.model}</span>
+                <span className="text-sm font-bold text-slate-700 mt-1 block">{asset.model || '—'}</span>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Número de Serie</span>
-                <span className="text-sm font-mono font-bold text-slate-700 mt-1 block">{asset.serialNumber || 'N/A'}</span>
+                <span className="text-sm font-mono font-bold text-slate-700 mt-1 block">{asset.serialNumber || '—'}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Fecha de Adquisición</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Unidad de Medida</span>
+                <span className="text-sm font-semibold text-slate-700 mt-1 block">{asset.unit || 'PZA'}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Cantidad</span>
+                <span className="text-sm font-bold text-slate-700 mt-1 block">{asset.quantity}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Fecha Adquisición</span>
                 <span className="text-sm font-semibold text-slate-700 mt-1 block">{formattedDate}</span>
               </div>
+            </div>
+
+            <hr className="my-6 border-t border-slate-100" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-5 gap-x-6">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Valor Adquisición</span>
-                <span className="text-sm font-bold text-amber-600 mt-1 block">{formattedValue} USD</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Valor de Compra</span>
+                <span className="text-sm font-bold text-slate-800 mt-1 block">{formatCurrency(asset.purchaseValue)}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Estado actual</span>
-                <div className="mt-1"><StatusBadge status={asset.status} /></div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Vida Útil (Años)</span>
+                <span className="text-sm font-bold text-slate-800 mt-1 block">{asset.usefulLife ? `${asset.usefulLife} años` : '—'}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Valor Residual</span>
+                <span className="text-sm font-bold text-slate-800 mt-1 block">{formatCurrency(asset.residualValue)}</span>
               </div>
             </div>
           </SectionCard>
 
-          <SectionCard title="Observaciones e Historial Técnico">
-            <p className="text-sm text-slate-600 font-medium leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
-              {asset.observations || 'Sin observaciones registradas para este activo fijo.'}
+          <SectionCard title="Observaciones">
+            <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
+              {asset.observations || asset.description || 'Sin observaciones registradas para este activo fijo.'}
             </p>
           </SectionCard>
         </div>

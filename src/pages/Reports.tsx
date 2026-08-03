@@ -69,7 +69,7 @@ export const Reports: React.FC = () => {
     }, 2000);
   };
 
-  const totalAssetsValue = assets.reduce((sum, a) => sum + a.value, 0);
+  const totalAssetsValue = assets.reduce((sum, a) => sum + (a.purchaseValue || 0), 0);
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
