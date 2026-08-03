@@ -9,6 +9,7 @@ import {
   HiOutlineBriefcase, 
   HiOutlineTag,
   HiOutlineCheckCircle,
+  HiOutlineMapPin,
   HiOutlineDocumentChartBar, 
   HiOutlineCog6Tooth 
 } from 'react-icons/hi2';
@@ -24,6 +25,7 @@ export const Sidebar: React.FC = () => {
     { name: 'Activos', path: '/assets', icon: HiOutlineBriefcase },
     { name: 'Categorías', path: '/categories', icon: HiOutlineTag },
     { name: 'Estados', path: '/statuses', icon: HiOutlineCheckCircle },
+    { name: 'Ubicaciones', path: '/locations', icon: HiOutlineMapPin },
     { name: 'Reportes', path: '/reports', icon: HiOutlineDocumentChartBar },
     { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth },
   ];
