@@ -152,6 +152,7 @@ export const CategoriesPage: React.FC = () => {
                 <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="px-6 py-3.5 w-16 text-center">N°</th>
                   <th className="px-6 py-3.5">Nombre de Categoría</th>
+                  <th className="px-6 py-3.5 text-center">Vida Útil (Años)</th>
                   <th className="px-6 py-3.5">Descripción</th>
                   <th className="px-6 py-3.5 text-right">Acciones</th>
                 </tr>
@@ -161,6 +162,11 @@ export const CategoriesPage: React.FC = () => {
                   <tr key={cat.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-6 py-4 text-center font-bold text-slate-400">{index + 1}</td>
                     <td className="px-6 py-4 font-bold text-slate-800">{cat.name}</td>
+                    <td className="px-6 py-4 text-center font-bold text-slate-700">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/60">
+                        {cat.usefulLife ?? 5} años
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-slate-500 max-w-md truncate">{cat.description || '—'}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

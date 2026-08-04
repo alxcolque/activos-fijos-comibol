@@ -36,7 +36,6 @@ export const AssetForm: React.FC = () => {
     quantity: 1,
     purchaseDate: new Date().toISOString().split('T')[0],
     purchaseValue: 1,
-    usefulLife: 5,
     residualValue: 1,
     description: '',
     observations: '',
@@ -76,9 +75,8 @@ export const AssetForm: React.FC = () => {
         unit: selectedAsset.unit || 'PZA',
         quantity: selectedAsset.quantity || 1,
         purchaseDate: selectedAsset.purchaseDate ? selectedAsset.purchaseDate.split('T')[0] : '',
-        purchaseValue: selectedAsset.purchaseValue || 0,
-        usefulLife: selectedAsset.usefulLife || 5,
-        residualValue: selectedAsset.residualValue || 0,
+        purchaseValue: selectedAsset.purchaseValue || 1,
+        residualValue: selectedAsset.residualValue || 1,
         description: selectedAsset.description || '',
         observations: selectedAsset.observations || '',
         photo: selectedAsset.photo || '',
@@ -109,7 +107,6 @@ export const AssetForm: React.FC = () => {
     if (!formData.locationId) newErrors.locationId = 'Seleccione una ubicación.';
     if (formData.quantity <= 0) newErrors.quantity = 'La cantidad debe ser mayor a 0.';
     if (formData.purchaseValue < 0) newErrors.purchaseValue = 'El valor de compra debe ser mayor o igual a 0.';
-    if (formData.usefulLife <= 0) newErrors.usefulLife = 'La vida útil debe ser mayor a 0.';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -134,7 +131,6 @@ export const AssetForm: React.FC = () => {
         quantity: Number(formData.quantity),
         purchaseDate: formData.purchaseDate || undefined,
         purchaseValue: Number(formData.purchaseValue),
-        usefulLife: Number(formData.usefulLife),
         residualValue: Number(formData.residualValue) || undefined,
         description: formData.description.trim() || undefined,
         observations: formData.observations.trim() || undefined,
@@ -160,6 +156,8 @@ export const AssetForm: React.FC = () => {
       </div>
     );
   }
+
+  const selectedCategory = categories.find((c) => c.id === formData.categoryId);
 
   return (
     <div className="space-y-6">
@@ -197,7 +195,7 @@ export const AssetForm: React.FC = () => {
             <div className="flex flex-col gap-4 items-center">
               <div className="w-full aspect-[4/3] rounded-xl overflow-hidden shadow-xs bg-slate-100 shrink-0">
                 <AssetImage
-                  src={formData.photo}
+                  src={formData.photo || undefined}
                   alt={formData.name || 'Previsualización'}
                   categoryId={formData.categoryId}
                   className="w-full h-full object-cover"
@@ -235,8 +233,7 @@ export const AssetForm: React.FC = () => {
                   value={formData.code}
                   onChange={(e) => handleInputChange('code', e.target.value)}
                   required
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-mono font-bold bg-slate-50 transition-colors ${errors.code ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                    }`}
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-mono font-bold bg-slate-50 transition-colors ${errors.code ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'}`}
                 />
                 {errors.code && <span className="text-[10px] font-bold text-rose-500 block mt-1">{errors.code}</span>}
               </div>
@@ -251,8 +248,7 @@ export const AssetForm: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   required
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors ${errors.name ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                    }`}
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors ${errors.name ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'}`}
                 />
                 {errors.name && <span className="text-[10px] font-bold text-rose-500 block mt-1">{errors.name}</span>}
               </div>
@@ -265,13 +261,12 @@ export const AssetForm: React.FC = () => {
                   value={formData.categoryId}
                   onChange={(e) => handleInputChange('categoryId', e.target.value)}
                   required
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.categoryId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                    }`}
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.categoryId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'}`}
                 >
                   <option value="">-- Seleccionar Categoría --</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                      {cat.name} ({cat.usefulLife ?? 5} años)
                     </option>
                   ))}
                 </select>
@@ -286,8 +281,7 @@ export const AssetForm: React.FC = () => {
                   value={formData.statusId}
                   onChange={(e) => handleInputChange('statusId', e.target.value)}
                   required
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.statusId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                    }`}
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.statusId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'}`}
                 >
                   <option value="">-- Seleccionar Estado --</option>
                   {statuses.map((st) => (
@@ -307,8 +301,7 @@ export const AssetForm: React.FC = () => {
                   value={formData.locationId}
                   onChange={(e) => handleInputChange('locationId', e.target.value)}
                   required
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.locationId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'
-                    }`}
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none text-xs font-semibold bg-slate-50 transition-colors ${errors.locationId ? 'border-rose-500' : 'border-slate-200 focus:border-amber-500'}`}
                 >
                   <option value="">-- Seleccionar Ubicación --</option>
                   {locations.map((loc) => (
@@ -353,14 +346,14 @@ export const AssetForm: React.FC = () => {
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Vida Útil (Años) <span className="text-rose-500">*</span>
+                  Vida Útil (según Categoría)
                 </label>
                 <input
-                  type="number"
-                  value={formData.usefulLife}
-                  onChange={(e) => handleInputChange('usefulLife', Number(e.target.value))}
-                  required
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors"
+                  type="text"
+                  readOnly
+                  disabled
+                  value={selectedCategory ? `${selectedCategory.usefulLife ?? 5} años` : 'Seleccione Categoría'}
+                  className="w-full px-3.5 py-2 border border-slate-200/80 rounded-xl text-xs font-bold bg-slate-100 text-slate-500"
                 />
               </div>
 

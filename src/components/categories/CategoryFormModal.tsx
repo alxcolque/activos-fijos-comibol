@@ -19,15 +19,18 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [usefulLife, setUsefulLife] = useState<number>(5);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (category) {
       setName(category.name || '');
       setDescription(category.description || '');
+      setUsefulLife(category.usefulLife ?? 5);
     } else {
       setName('');
       setDescription('');
+      setUsefulLife(5);
     }
     setError(null);
   }, [category, isOpen]);
@@ -43,10 +46,16 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       return;
     }
 
+    if (usefulLife <= 0) {
+      setError('La vida útil debe ser mayor a 0 años.');
+      return;
+    }
+
     try {
       await onSubmit({
         name: name.trim(),
         description: description.trim() || undefined,
+        usefulLife: Number(usefulLife),
       });
       onClose();
     } catch (err: any) {
@@ -95,10 +104,25 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
+              Vida Útil Predeterminada (Años) <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              value={usefulLife}
+              onChange={(e) => setUsefulLife(Number(e.target.value))}
+              placeholder="EJ: 5"
+              required
+              min={1}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
               Descripción / Observaciones
             </label>
             <textarea
-              rows={4}
+              rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Descripción de los tipos de activos comprendidos en esta categoría..."

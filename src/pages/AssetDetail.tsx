@@ -182,7 +182,7 @@ export const AssetDetail: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Vida Útil (Años)</span>
-                <span className="text-sm font-bold text-slate-800 mt-1 block">{asset.usefulLife ? `${asset.usefulLife} años` : '—'}</span>
+                <span className="text-sm font-bold text-slate-800 mt-1 block">{asset.category?.usefulLife ? `${asset.category.usefulLife} años` : '—'}</span>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Valor Residual</span>

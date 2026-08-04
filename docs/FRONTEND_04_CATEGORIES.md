@@ -1,6 +1,6 @@
 # Módulo de Categorías de Activos Fijos
 **Documento:** FRONTEND_04_CATEGORIES.md  
-**Versión:** 1.0.1  
+**Versión:** 1.1.0  
 **Proyecto:** Client Frontend Activos Fijos COMIBOL  
 **Módulo:** Gestión de Categorías y Catálogo Patrimonial  
 **Fecha:** Agosto 2026  
@@ -9,7 +9,7 @@
 
 # 1. Objetivo
 
-Especificar la implementación técnica del módulo de **Categorías de Activos** (`/categories`) para administrar el catálogo de familias de activos de COMIBOL (Maquinaria Pesada, Equipos de Computación, Vehículos, Muebles y Enseres, etc.). Permite consultar, crear, editar y eliminar categorías mediante modales reactivos utilizando exclusivamente los campos `name` y `description`.
+Especificar la implementación técnica del módulo de **Categorías de Activos** (`/categories`) para administrar el catálogo de familias de activos de COMIBOL (Maquinaria Pesada, Equipos de Computación, Vehículos, Muebles y Enseres, etc.). Permite consultar, crear, editar y eliminar categorías mediante modales reactivos utilizando los campos `name`, `usefulLife` y `description`.
 
 ---
 
@@ -32,6 +32,7 @@ export interface AssetCategory {
   id: string;
   name: string;
   description?: string | null;
+  usefulLife?: number;
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -42,6 +43,7 @@ export interface AssetCategory {
 export interface CreateCategoryDTO {
   name: string;
   description?: string;
+  usefulLife?: number;
 }
 
 export interface UpdateCategoryDTO extends Partial<CreateCategoryDTO> {}
@@ -65,51 +67,6 @@ interface CategoryState {
   updateCategory: (id: string, data: UpdateCategoryDTO) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
 }
-
-export const useCategoryStore = create<CategoryState>((set, get) => ({
-  categories: [],
-  isLoading: false,
-  error: null,
-  fetchCategories: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await api.get<{ success: boolean; data: AssetCategory[] }>('/categories');
-      set({ categories: response.data.data, isLoading: false });
-    } catch (err: any) {
-      set({ error: err.response?.data?.message || 'Error al obtener categorías', isLoading: false });
-    }
-  },
-  createCategory: async (data) => {
-    set({ isLoading: true, error: null });
-    try {
-      await api.post('/categories', data);
-      await get().fetchCategories();
-    } catch (err: any) {
-      set({ isLoading: false });
-      throw new Error(err.response?.data?.message || 'Error al crear categoría');
-    }
-  },
-  updateCategory: async (id, data) => {
-    set({ isLoading: true, error: null });
-    try {
-      await api.put(`/categories/${id}`, data);
-      await get().fetchCategories();
-    } catch (err: any) {
-      set({ isLoading: false });
-      throw new Error(err.response?.data?.message || 'Error al actualizar categoría');
-    }
-  },
-  deleteCategory: async (id) => {
-    set({ isLoading: true, error: null });
-    try {
-      await api.delete(`/categories/${id}`);
-      await get().fetchCategories();
-    } catch (err: any) {
-      set({ isLoading: false });
-      throw new Error(err.response?.data?.message || 'Error al eliminar categoría');
-    }
-  },
-}));
 ```
 
 ---
@@ -118,18 +75,9 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
 
 ### Vistas y Modales:
 1. **Tabla de Categorías (`DataTable`):**
-   - Columnas: Nombre de Categoría, Descripción, Total Activos Asociados, Acciones.
+   - Columnas: N°, Nombre de Categoría, Vida Útil (Años), Descripción, Acciones.
 2. **Modal Formulario Categoría (`CategoryFormModal.tsx`):**
-   - Inputs exclusivamente para `name` y `description`.
+   - Inputs para `name`, `usefulLife` (Años de vida útil predeterminada) y `description`.
    - Validaciones de campos obligatorios antes de enviar.
 3. **Modal de Confirmación de Eliminación (`ConfirmDialog`):**
    - Muestra advertencia si la categoría contiene activos registrados impidiendo la eliminación física.
-
----
-
-# 6. Criterios de Aceptación
-
-- [ ] Formulario CRUD únicamente con los campos `name` y `description`.
-- [ ] Listado de categorías renderizado desde `GET /api/v1/categories`.
-- [ ] Creación y edición reactiva mediante modal sin recargar la página.
-- [ ] Feedback con alertas visuales de éxito o error en peticiones HTTP.

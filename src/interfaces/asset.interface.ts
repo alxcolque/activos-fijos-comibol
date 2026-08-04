@@ -1,6 +1,7 @@
 export interface AssetCategoryRef {
   id: string;
   name: string;
+  usefulLife?: number;
 }
 
 export interface AssetStatusRef {
@@ -30,7 +31,6 @@ export interface AssetModel {
   purchaseDate?: string | null;
   purchaseYear?: number | null;
   purchaseValue?: number | null;
-  usefulLife?: number | null;
   residualValue?: number | null;
   currentValue?: number | null;
   observations?: string | null;
@@ -56,7 +56,7 @@ export interface CreateAssetDTO {
   quantity?: number;
   purchaseDate?: string | null;
   purchaseValue?: number | null;
-  usefulLife?: number | null;
+  residualValue?: number | null;
   observations?: string | null;
   photo?: string | null;
 }
