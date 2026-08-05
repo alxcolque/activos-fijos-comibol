@@ -188,6 +188,18 @@ export const AssetDetail: React.FC = () => {
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Valor Residual</span>
                 <span className="text-sm font-bold text-slate-800 mt-1 block">{formatCurrency(asset.residualValue)}</span>
               </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Depreciación Anual</span>
+                <span className="text-sm font-semibold text-slate-700 mt-1 block">{formatCurrency(asset.dep)}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Depreciación Acumulada</span>
+                <span className="text-sm font-bold text-amber-700 mt-1 block">{formatCurrency(asset.depac)}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Saldo (Valor Neto)</span>
+                <span className="text-sm font-bold text-emerald-700 mt-1 block">{formatCurrency(asset.balance)}</span>
+              </div>
             </div>
           </SectionCard>
 

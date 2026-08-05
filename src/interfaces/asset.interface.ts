@@ -33,6 +33,9 @@ export interface AssetModel {
   purchaseValue?: number | null;
   residualValue?: number | null;
   currentValue?: number | null;
+  dep?: number;
+  depac?: number;
+  balance?: number;
   observations?: string | null;
   photo?: string | null;
   createdAt: string;

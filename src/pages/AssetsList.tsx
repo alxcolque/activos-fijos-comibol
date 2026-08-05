@@ -96,6 +96,15 @@ export const AssetsList: React.FC = () => {
     }).format(val);
   };
 
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('es-BO', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
@@ -242,29 +251,35 @@ export const AssetsList: React.FC = () => {
       ) : viewMode === 'table' ? (
         <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="px-6 py-3.5 w-14 text-center">N°</th>
-                  <th className="px-6 py-3.5">Código</th>
-                  <th className="px-6 py-3.5 text-center">QR</th>
-                  <th className="px-6 py-3.5">Nombre del Activo</th>
-                  <th className="px-6 py-3.5">Categoría</th>
-                  <th className="px-6 py-3.5">Ubicación</th>
-                  <th className="px-6 py-3.5 text-center">Estado</th>
-                  <th className="px-6 py-3.5 text-right">Valor Compra</th>
-                  <th className="px-6 py-3.5 text-right">Acciones</th>
+                  <th className="px-4 py-3.5 w-12 text-center">N°</th>
+                  <th className="px-4 py-3.5">Código</th>
+                  <th className="px-4 py-3.5 text-center">QR</th>
+                  <th className="px-4 py-3.5 text-center">Cant.</th>
+                  <th className="px-4 py-3.5 text-center">Unidad</th>
+                  <th className="px-4 py-3.5">Nombre del Activo</th>
+                  <th className="px-4 py-3.5 text-center">Estado</th>
+                  <th className="px-4 py-3.5 text-center">Fecha Adquisición</th>
+                  <th className="px-4 py-3.5 text-right">Valor Original</th>
+                  <th className="px-4 py-3.5 text-right">Depreciación</th>
+                  <th className="px-4 py-3.5 text-right">Dep. Acumulada</th>
+                  <th className="px-4 py-3.5 text-right">Saldo</th>
+                  <th className="px-4 py-3.5 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
                 {assets.map((item, index) => (
                   <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-6 py-4 text-center font-bold text-slate-400">{index + 1}</td>
-                    <td className="px-6 py-4 font-mono font-bold text-amber-600">{item.code}</td>
-                    <td className="px-6 py-4 text-center">
-                      <QRBadge value={item.qrCode || item.code} size={40} />
+                    <td className="px-4 py-4 text-center font-bold text-slate-400">{index + 1}</td>
+                    <td className="px-4 py-4 font-mono font-bold text-amber-600">{item.code}</td>
+                    <td className="px-4 py-4 text-center">
+                      <QRBadge value={item.qrCode || item.code} size={36} />
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-800">
+                    <td className="px-4 py-4 text-center font-bold text-slate-700">{item.quantity}</td>
+                    <td className="px-4 py-4 text-center font-semibold text-slate-500">{item.unit || 'PZA'}</td>
+                    <td className="px-4 py-4 font-bold text-slate-800">
                       <div className="flex flex-col">
                         <span>{item.name}</span>
                         {(item.brand || item.model) && (
@@ -274,19 +289,25 @@ export const AssetsList: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-semibold text-slate-600">
-                      {item.category?.name || 'Sin Categoría'}
-                    </td>
-                    <td className="px-6 py-4 font-medium text-slate-600">
-                      {item.location?.name || 'Sin Ubicación'}
-                    </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-4 text-center">
                       <StatusBadge status={item.status?.name || 'Desconocido'} />
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-slate-800">
+                    <td className="px-4 py-4 text-center text-slate-600 font-medium">
+                      {formatDate(item.purchaseDate)}
+                    </td>
+                    <td className="px-4 py-4 text-right font-bold text-slate-800">
                       {formatCurrency(item.purchaseValue)}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-4 text-right font-semibold text-slate-600">
+                      {formatCurrency(item.dep)}
+                    </td>
+                    <td className="px-4 py-4 text-right font-semibold text-amber-700">
+                      {formatCurrency(item.depac)}
+                    </td>
+                    <td className="px-4 py-4 text-right font-bold text-emerald-700">
+                      {formatCurrency(item.balance)}
+                    </td>
+                    <td className="px-4 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
