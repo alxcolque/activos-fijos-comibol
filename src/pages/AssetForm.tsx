@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAssetStore } from '../store/assetStore';
 import { SectionCard } from '../components/SectionCard';
-import { AssetImage } from '../components/AssetImage';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { HiOutlineArrowLeft, HiOutlineCheck } from 'react-icons/hi2';
+import api from '../api/axios.instance';
+import { getAssetUrl } from '../utils/assets';
+import {
+  HiOutlineArrowLeft,
+  HiOutlineCheck,
+  HiOutlineCloudArrowUp,
+  HiOutlineTrash,
+  HiOutlineArrowPath,
+} from 'react-icons/hi2';
 
 export const AssetForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +51,45 @@ export const AssetForm: React.FC = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadImageError, setUploadImageError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setUploadImageError('Solo se permiten archivos de imagen (PNG, JPG, JPEG, WEBP, GIF, SVG).');
+      return;
+    }
+
+    setUploadImageError(null);
+    const localBlobUrl = URL.createObjectURL(file);
+    setPreviewUrl(localBlobUrl);
+    setIsUploadingImage(true);
+
+    try {
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('folder', 'photos');
+
+      const res = await api.post('/uploads', uploadData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (res.data?.data?.url || res.data?.data?.path) {
+        const photoPath = res.data.data.url || `/${res.data.data.path}`;
+        handleInputChange('photo', photoPath);
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.customMessage || 'Error al subir la imagen al servidor.';
+      setUploadImageError(msg);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     fetchInitialData();
@@ -192,28 +238,121 @@ export const AssetForm: React.FC = () => {
         {/* Columna Previsualización Fotográfica */}
         <div className="lg:col-span-1 space-y-6">
           <SectionCard title="Fotografía del Activo">
-            <div className="flex flex-col gap-4 items-center">
-              <div className="w-full aspect-[4/3] rounded-xl overflow-hidden shadow-xs bg-slate-100 shrink-0">
-                <AssetImage
-                  src={formData.photo || undefined}
-                  alt={formData.name || 'Previsualización'}
-                  categoryId={formData.categoryId}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-full space-y-1">
-                <label className="text-xs font-bold text-slate-700 block">URL de Fotografía</label>
-                <input
-                  type="text"
-                  placeholder="Pegar URL de la imagen..."
-                  value={formData.photo}
-                  onChange={(e) => handleInputChange('photo', e.target.value)}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 font-medium text-xs bg-slate-50 transition-colors"
-                />
-              </div>
-              <span className="text-[10px] text-slate-400 font-semibold text-center leading-relaxed">
-                Puede proporcionar el enlace HTTPS de una imagen para previsualización en el expediente.
-              </span>
+            <div className="space-y-3">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    handleFileUpload(e.target.files[0]);
+                  }
+                }}
+              />
+
+              {(() => {
+                const activePhotoUrl = previewUrl || (formData.photo ? getAssetUrl(formData.photo) : null);
+
+                if (activePhotoUrl) {
+                  return (
+                    <div className="flex flex-col items-center gap-3 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl">
+                      <div className="w-full aspect-[4/3] rounded-xl border border-slate-200 overflow-hidden bg-white shrink-0 shadow-xs relative">
+                        <img
+                          src={activePhotoUrl}
+                          alt="Vista previa del activo"
+                          className="w-full h-full object-cover"
+                        />
+                        {isUploadingImage && (
+                          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] flex flex-col items-center justify-center text-white gap-2">
+                            <LoadingSpinner />
+                            <span className="text-xs font-bold animate-pulse">Guardando en el servidor...</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-center text-center gap-2 w-full">
+                        <span className="text-[11px] font-mono text-slate-400 truncate max-w-full">
+                          {formData.photo || 'Vista previa local'}
+                        </span>
+                        <div className="flex items-center justify-center gap-2 mt-1 w-full">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploadingImage}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 rounded-xl font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            <HiOutlineArrowPath className="text-sm" />
+                            <span>Cambiar</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewUrl(null);
+                              handleInputChange('photo', '');
+                            }}
+                            disabled={isUploadingImage}
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            <HiOutlineTrash className="text-sm" />
+                            <span>Eliminar</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(false);
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      handleFileUpload(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`flex flex-col items-center justify-center p-6 min-h-[220px] border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
+                    isDragOver
+                      ? 'border-amber-500 bg-amber-50/60 scale-[0.99]'
+                      : 'border-slate-300 hover:border-amber-400 bg-slate-50/50 hover:bg-slate-50'
+                  }`}
+                >
+                  {isUploadingImage ? (
+                    <div className="flex flex-col items-center py-4 gap-2 text-amber-600">
+                      <LoadingSpinner />
+                      <span className="text-xs font-bold animate-pulse">Subiendo imagen...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <div className="p-3 bg-amber-100/80 text-amber-600 rounded-2xl shadow-xs">
+                        <HiOutlineCloudArrowUp className="text-2xl" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-700">
+                          Arrastra la imagen aquí o <span className="text-amber-600 underline">explorar</span>
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          Solo imágenes (PNG, JPG, WEBP, GIF, SVG)
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+              {uploadImageError && (
+                <p className="text-xs font-bold text-rose-500 mt-1 text-center">{uploadImageError}</p>
+              )}
             </div>
           </SectionCard>
         </div>

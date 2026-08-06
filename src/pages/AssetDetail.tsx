@@ -191,7 +191,7 @@ export const AssetDetail: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Depreciación Anual</span>
-                <span className="text-sm font-semibold text-slate-700 mt-1 block">{formatCurrency(asset.dep)}</span>
+                <span className="text-sm font-semibold text-slate-700 mt-1 block">{asset.dep != null ? `${asset.dep}%` : '—'}</span>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Depreciación Acumulada</span>

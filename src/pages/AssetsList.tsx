@@ -306,7 +306,7 @@ export const AssetsList: React.FC = () => {
                       {formatCurrency(item.purchaseValue)}
                     </td>
                     <td className="px-4 py-4 text-right font-semibold text-slate-600">
-                      {formatCurrency(item.dep)}
+                      {item.dep != null ? `${item.dep}%` : '—'}
                     </td>
                     <td className="px-4 py-4 text-right font-semibold text-amber-700">
                       {formatCurrency(item.depac)}

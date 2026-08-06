@@ -10,7 +10,13 @@ export const getAssetUrl = (path?: string): string => {
     .replace(/^(\.\/)+/, '')
     .replace(/^\//, '');
 
-  const baseUrl = import.meta.env.BASE_URL;
+  if (cleanPath.startsWith('uploads/')) {
+    const apiBase = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
+    const serverBase = apiBase.replace(/\/api\/v1\/?$/, '');
+    return `${serverBase}/${cleanPath}`;
+  }
+
+  const baseUrl = import.meta.env.BASE_URL || '/';
   return baseUrl.endsWith('/') ? `${baseUrl}${cleanPath}` : `${baseUrl}/${cleanPath}`;
 };
 
