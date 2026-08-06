@@ -12,6 +12,7 @@ import {
   HiOutlineWrenchScrewdriver 
 } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
+import { formatCurrency } from '../utils/currency';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -30,11 +31,7 @@ export const Dashboard: React.FC = () => {
   const operationalCount = assets.filter(a => a.status?.name?.toLowerCase().includes('operativo')).length;
   const maintenanceCount = assets.filter(a => a.status?.name?.toLowerCase().includes('mantenimiento')).length;
 
-  const formattedTotalValue = new Intl.NumberFormat('es-BO', {
-    style: 'currency',
-    currency: 'BOB',
-    maximumFractionDigits: 0
-  }).format(totalValue);
+  const formattedTotalValue = formatCurrency(totalValue);
 
   const categoryChartData = categories.map(cat => {
     const catAssets = assets.filter(a => a.categoryId === cat.id);
@@ -109,11 +106,7 @@ export const Dashboard: React.FC = () => {
           <div className="space-y-5 py-2">
             {categoryChartData.map((data, index) => {
               const percentage = (data.value / maxValue) * 100;
-              const formattedVal = new Intl.NumberFormat('es-BO', {
-                style: 'currency',
-                currency: 'BOB',
-                maximumFractionDigits: 0
-              }).format(data.value);
+              const formattedVal = formatCurrency(data.value);
 
               return (
                 <div key={index} className="space-y-1.5">
@@ -185,10 +178,7 @@ export const Dashboard: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {recentAssets.map((asset) => {
-                const formattedVal = new Intl.NumberFormat('es-BO', {
-                  style: 'currency',
-                  currency: 'BOB'
-                }).format(asset.purchaseValue || 0);
+                const formattedVal = formatCurrency(asset.purchaseValue || 0);
 
                 return (
                   <tr 

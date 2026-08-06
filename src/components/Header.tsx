@@ -3,7 +3,8 @@ import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import { getAssetUrl } from '../utils/assets';
 import { Breadcrumb } from './Breadcrumb';
-import { HiBars3, HiBell } from 'react-icons/hi2';
+import { CurrencyToggle } from './CurrencyToggle';
+import { HiBars3, HiBell, HiUser } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
 
 export const Header: React.FC = () => {
@@ -38,8 +39,11 @@ export const Header: React.FC = () => {
         <Breadcrumb />
       </div>
 
-      {/* Lado derecho: Notificaciones, perfil y menú hamburguesa */}
+      {/* Lado derecho: Switcher de Moneda, Notificaciones, perfil y menú hamburguesa */}
       <div className="flex items-center gap-3.5 relative">
+        {/* Switcher de Moneda (BOB 🇧🇴 / USD 🇺🇸) */}
+        <CurrencyToggle />
+
         {/* Notificaciones */}
         <div ref={notifRef} className="relative">
           <button
@@ -89,13 +93,10 @@ export const Header: React.FC = () => {
                 setProfileOpen(!profileOpen);
                 setNotifOpen(false);
               }}
-              className="flex items-center focus:outline-none shrink-0"
+              className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-amber-500 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors focus:outline-none shrink-0"
+              title={user.fullName || user.name || 'Administrador'}
             >
-              <img
-                className="w-8 h-8 rounded-full border-2 border-amber-500 object-cover hover:opacity-90 transition-opacity"
-                src={getAssetUrl(user.avatar || 'avatars/admin.svg')}
-                alt={user.fullName || user.name || 'Administrador'}
-              />
+              <HiUser className="text-base" />
             </button>
 
             {/* Menú de Perfil */}

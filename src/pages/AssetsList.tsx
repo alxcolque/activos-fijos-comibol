@@ -10,7 +10,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { SearchBar } from '../components/SearchBar';
-
+import { formatCurrency } from '../utils/currency';
 import {
   HiOutlineEye,
   HiOutlinePencilSquare,
@@ -86,14 +86,6 @@ export const AssetsList: React.FC = () => {
       showNotification('danger', err.message || 'No se pudo eliminar el activo.');
       setAssetToDelete(null);
     }
-  };
-
-  const formatCurrency = (val?: number | null) => {
-    if (val == null) return '—';
-    return new Intl.NumberFormat('es-BO', {
-      style: 'currency',
-      currency: 'BOB',
-    }).format(val);
   };
 
   const formatDate = (dateStr?: string | null) => {

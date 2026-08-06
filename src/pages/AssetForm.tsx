@@ -468,7 +468,7 @@ export const AssetForm: React.FC = () => {
 
           {/* Valores Económicos y Cantidades */}
           <SectionCard title="Valores Económicos y Contables">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
                   Valor Compra (Bs.) <span className="text-rose-500">*</span>
@@ -493,19 +493,6 @@ export const AssetForm: React.FC = () => {
                   disabled
                   value={selectedCategory ? `${selectedCategory.usefulLife ?? 5} años` : 'Seleccione Categoría'}
                   className="w-full px-3.5 py-2 border border-slate-200/80 rounded-xl text-xs font-bold bg-slate-100 text-slate-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Valor Residual (Bs.)
-                </label>
-                <input
-                  type="number"
-                  step="1"
-                  value={formData.residualValue}
-                  onChange={(e) => handleInputChange('residualValue', Number(e.target.value))}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none text-xs font-bold bg-slate-50 transition-colors"
                 />
               </div>
 

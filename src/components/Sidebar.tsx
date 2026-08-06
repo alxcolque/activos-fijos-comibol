@@ -12,7 +12,8 @@ import {
   HiOutlineMapPin,
   HiOutlineFolder,
   HiOutlineDocumentChartBar, 
-  HiOutlineCog6Tooth 
+  HiOutlineCog6Tooth,
+  HiUser
 } from 'react-icons/hi2';
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
 
@@ -109,12 +110,9 @@ export const Sidebar: React.FC = () => {
       {user && (
         <div className="p-4 border-t border-blue-700 bg-blue-800 shrink-0">
           <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center' : ''}`}>
-            <img 
-              src={userAvatar} 
-              className="w-9 h-9 rounded-full border-2 border-amber-500 object-cover shrink-0"
-              alt={userName}
-              title={userName}
-            />
+            <div className="flex items-center justify-center w-9 h-9 rounded-full border-2 border-amber-500 bg-blue-900 text-amber-400 shrink-0">
+              <HiUser className="text-lg" />
+            </div>
             {!sidebarCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-bold text-white truncate">{userName}</span>

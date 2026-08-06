@@ -6,6 +6,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { QRBadge } from '../components/QRBadge';
 import { AssetImage } from '../components/AssetImage';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { formatCurrency } from '../utils/currency';
 import { HiOutlineArrowLeft, HiOutlinePencilSquare, HiOutlinePrinter } from 'react-icons/hi2';
 
 export const AssetDetail: React.FC = () => {
@@ -44,14 +45,6 @@ export const AssetDetail: React.FC = () => {
   }
 
   const asset = selectedAsset;
-
-  const formatCurrency = (val?: number | null) => {
-    if (val == null) return '—';
-    return new Intl.NumberFormat('es-BO', {
-      style: 'currency',
-      currency: 'BOB',
-    }).format(val);
-  };
 
   const formattedDate = asset.purchaseDate
     ? new Date(asset.purchaseDate).toLocaleDateString('es-BO', {

@@ -4,6 +4,8 @@ import type { AssetModel } from '../interfaces/asset.interface';
 import { AssetImage } from './AssetImage';
 import { StatusBadge } from './StatusBadge';
 
+import { formatCurrency } from '../utils/currency';
+
 interface AssetCardProps {
   asset: AssetModel;
 }
@@ -11,12 +13,7 @@ interface AssetCardProps {
 export const AssetCard: React.FC<AssetCardProps> = ({ asset }) => {
   const navigate = useNavigate();
 
-  const formattedValue = asset.purchaseValue != null
-    ? new Intl.NumberFormat('es-BO', {
-        style: 'currency',
-        currency: 'BOB',
-      }).format(asset.purchaseValue)
-    : '—';
+  const formattedValue = formatCurrency(asset.purchaseValue);
 
   return (
     <div

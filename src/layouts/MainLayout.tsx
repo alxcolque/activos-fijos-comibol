@@ -18,7 +18,8 @@ import {
   HiOutlineFolder,
   HiOutlineDocumentChartBar, 
   HiOutlineCog6Tooth,
-  HiXMark
+  HiXMark,
+  HiUser
 } from 'react-icons/hi2';
 
 export const MainLayout: React.FC = () => {
@@ -126,11 +127,9 @@ export const MainLayout: React.FC = () => {
             {/* Info de Usuario al Fondo */}
             {user && (
               <div className="p-4 border-t border-blue-750 bg-blue-800 flex items-center gap-3 shrink-0">
-                <img 
-                  src={userAvatar} 
-                  className="w-10 h-10 rounded-full border-2 border-amber-500 object-cover shrink-0"
-                  alt={userName} 
-                />
+                <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-amber-500 bg-blue-900 text-amber-400 shrink-0">
+                  <HiUser className="text-xl" />
+                </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-bold text-white truncate">{userName}</span>
                   <span className="text-[10px] font-semibold text-blue-200 truncate">{userRole}</span>

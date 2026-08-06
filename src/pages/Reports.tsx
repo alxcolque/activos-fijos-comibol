@@ -5,6 +5,7 @@ import { PageTitle } from '../components/PageTitle';
 import { SectionCard } from '../components/SectionCard';
 import { StatCard } from '../components/StatCard';
 import { HiOutlineDocumentText, HiOutlineArrowDownTray, HiOutlineChartPie, HiOutlineSparkles } from 'react-icons/hi2';
+import { formatCurrency } from '../utils/currency';
 import type { ReportItem } from '../interfaces';
 
 export const Reports: React.FC = () => {
@@ -70,11 +71,7 @@ export const Reports: React.FC = () => {
   };
 
   const totalAssetsValue = assets.reduce((sum, a) => sum + (a.purchaseValue || 0), 0);
-  const formattedValue = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0
-  }).format(totalAssetsValue);
+  const formattedValue = formatCurrency(totalAssetsValue);
 
   return (
     <div className="space-y-6">
