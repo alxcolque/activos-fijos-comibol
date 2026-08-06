@@ -5,7 +5,6 @@ import { Header } from '../components/Header';
 import { BottomNavigation } from '../components/BottomNavigation';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
-import { getAssetUrl } from '../utils/assets';
 import { useAssetStore } from '../store/assetStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { AppLogo } from '../components/AppLogo';
@@ -54,7 +53,6 @@ export const MainLayout: React.FC = () => {
 
   const userName = user?.fullName || user?.name || 'Administrador';
   const userRole = user?.role || 'Administrador COMIBOL';
-  const userAvatar = getAssetUrl(user?.avatar || 'avatars/admin.svg');
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased relative">

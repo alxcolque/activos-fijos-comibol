@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
-import { getAssetUrl } from '../utils/assets';
 import { Breadcrumb } from './Breadcrumb';
 import { CurrencyToggle } from './CurrencyToggle';
 import { HiBars3, HiBell, HiUser } from 'react-icons/hi2';

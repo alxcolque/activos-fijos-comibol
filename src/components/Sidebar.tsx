@@ -2,7 +2,6 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
-import { getAssetUrl } from '../utils/assets';
 import { AppLogo } from './AppLogo';
 import { 
   HiOutlineSquares2X2, 
@@ -35,7 +34,6 @@ export const Sidebar: React.FC = () => {
 
   const userName = user?.fullName || user?.name || 'Administrador';
   const userRole = user?.role || 'Administrador COMIBOL';
-  const userAvatar = getAssetUrl(user?.avatar || 'avatars/admin.svg');
 
   return (
     <aside 
