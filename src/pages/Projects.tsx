@@ -73,8 +73,12 @@ export const ProjectsPage: React.FC = () => {
 
   const formatDateRange = (startDate?: string | null, endDate?: string | null) => {
     if (!startDate && !endDate) return '—';
-    const startStr = startDate ? new Date(startDate).toLocaleDateString() : 'Indefinido';
-    const endStr = endDate ? new Date(endDate).toLocaleDateString() : 'Presente';
+    const startStr = startDate
+      ? new Date(startDate).toLocaleDateString('es-BO', { timeZone: 'UTC' })
+      : 'Indefinido';
+    const endStr = endDate
+      ? new Date(endDate).toLocaleDateString('es-BO', { timeZone: 'UTC' })
+      : 'Presente';
     return `${startStr} - ${endStr}`;
   };
 

@@ -98,10 +98,17 @@ export const AssetsList: React.FC = () => {
 
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return '—';
+    const datePart = dateStr.split('T')[0];
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return `${day}/${month}/${year}`;
+    }
     return new Date(dateStr).toLocaleDateString('es-BO', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+      timeZone: 'UTC',
     });
   };
 
