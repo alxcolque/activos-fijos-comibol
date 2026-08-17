@@ -7,7 +7,7 @@ import { QRBadge } from '../components/QRBadge';
 import { AssetImage } from '../components/AssetImage';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/currency';
-import { HiOutlineArrowLeft, HiOutlinePencilSquare, HiOutlinePrinter } from 'react-icons/hi2';
+import { HiOutlineArrowLeft, HiOutlinePencilSquare } from 'react-icons/hi2';
 
 export const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,6 +57,7 @@ export const AssetDetail: React.FC = () => {
 
   return (
     <div className="space-y-6">
+
       {/* Botón de retroceso y título */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -77,14 +78,6 @@ export const AssetDetail: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all"
-          >
-            <HiOutlinePrinter className="text-base" />
-            <span>Imprimir Ficha</span>
-          </button>
           <button
             type="button"
             className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-xl shadow-xs transition-all text-xs shrink-0"

@@ -1,10 +1,21 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const baseURL =
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  'http://localhost:3000/api/v1';
+const getApiBaseURL = () => {
+  const envBase = import.meta.env.VITE_API_BASE_URL;
+  if (envBase) {
+    const clean = envBase.replace(/\/+$/, '');
+    if (clean.endsWith('/v1')) return clean;
+    return `${clean}/v1`;
+  }
+
+  const serverUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
+  if (serverUrl.endsWith('/api/v1')) return serverUrl;
+  if (serverUrl.endsWith('/api')) return `${serverUrl}/v1`;
+  return `${serverUrl}/api/v1`;
+};
+
+const baseURL = getApiBaseURL();
 
 const api = axios.create({
   baseURL,

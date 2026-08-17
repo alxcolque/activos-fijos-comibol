@@ -20,6 +20,7 @@ import {
   HiOutlineTrash,
   HiOutlineDocumentText,
   HiOutlineLockOpen,
+  HiOutlineArrowDownTray,
   HiXMark,
 } from 'react-icons/hi2';
 
@@ -35,6 +36,8 @@ interface AssetAssignmentItem {
     id: string;
     code: string;
     name: string;
+    brand?: string;
+    model?: string;
     category?: { id: string; name: string };
     status?: { id: string; name: string };
   };
@@ -55,7 +58,6 @@ export const ProjectShowPage: React.FC = () => {
 
   // Catálogo completo de Activos
   const [assetsCatalog, setAssetsCatalog] = useState<AssetModel[]>([]);
-  const [isLoadingCatalog, setIsLoadingCatalog] = useState(false);
 
   // Modal "Asignar activo"
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -77,12 +79,50 @@ export const ProjectShowPage: React.FC = () => {
   const [deleteItem, setDeleteItem] = useState<AssetAssignmentItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Modal "Reporte Word"
+  const [isWordModalOpen, setIsWordModalOpen] = useState(false);
+  const [pageSize, setPageSize] = useState<'carta' | 'a4' | 'oficio'>('carta');
+  const [orientation, setOrientation] = useState<'vertical' | 'horizontal'>('horizontal');
+  const [isDownloadingWord, setIsDownloadingWord] = useState(false);
+
   // Notificaciones Toast
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
   const showNotification = (type: 'success' | 'danger', text: string) => {
     setToastMessage({ type, text });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleDownloadWordReport = async () => {
+    if (!projectId) return;
+    setIsDownloadingWord(true);
+    try {
+      const response = await api.get(`/projects/${projectId}/report-word`, {
+        params: { pageSize, orientation },
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const safeName = (project?.name || 'Proyecto').replace(/[^a-zA-Z0-9_-]/g, '_');
+      link.setAttribute('download', `Informe_Inventario_${safeName}.docx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setIsWordModalOpen(false);
+      showNotification('success', 'Informe Word generado y descargado exitosamente.');
+    } catch (err: any) {
+      console.error('Error al descargar reporte Word:', err);
+      showNotification('danger', 'No se pudo generar el informe Word.');
+    } finally {
+      setIsDownloadingWord(false);
+    }
   };
 
   // Cargar datos del proyecto, asignaciones y catálogo
@@ -125,7 +165,6 @@ export const ProjectShowPage: React.FC = () => {
   };
 
   const loadAssetsCatalog = async () => {
-    setIsLoadingCatalog(true);
     try {
       const res = await api.get<{ success: boolean; data: AssetModel[] }>('/assets', {
         params: { limit: 300 },
@@ -135,8 +174,6 @@ export const ProjectShowPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Error al cargar catálogo de activos:', err);
-    } finally {
-      setIsLoadingCatalog(false);
     }
   };
 
@@ -390,7 +427,16 @@ export const ProjectShowPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+          <button
+            onClick={() => setIsWordModalOpen(true)}
+            title="Descargar Informe de Inventario en documento Word (.docx)"
+            className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all shrink-0 border border-blue-800"
+          >
+            <HiOutlineArrowDownTray className="text-base text-amber-400" />
+            <span>Reporte Word</span>
+          </button>
+
           <button
             onClick={handleOpenAssignModal}
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all shrink-0"
@@ -851,6 +897,113 @@ export const ProjectShowPage: React.FC = () => {
         color="danger"
         onConfirm={handleConfirmDelete}
       />
+
+      {/* MODAL 4: Configuración Reporte Word */}
+      {isWordModalOpen && (
+        <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl max-w-md w-full space-y-5 relative">
+            <button
+              onClick={() => setIsWordModalOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <HiXMark className="text-lg" />
+            </button>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-blue-900">
+                <HiOutlineDocumentText className="text-xl text-amber-500" />
+                <h3 className="text-base font-bold">Configurar Informe Word (.docx)</h3>
+              </div>
+              <p className="text-xs text-slate-500">
+                Seleccione el formato y la orientación de página para exportar el inventario de activos del proyecto.
+              </p>
+            </div>
+
+            <div className="space-y-4 text-xs font-semibold text-slate-700">
+              {/* Tamaño de Hoja */}
+              <div className="space-y-1.5">
+                <label className="block text-slate-700 font-bold">Tamaño de Hoja</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'carta', label: 'Carta', sub: '8.5" x 11"' },
+                    { id: 'a4', label: 'A4', sub: '210 x 297 mm' },
+                    { id: 'oficio', label: 'Oficio', sub: '8.5" x 14"' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setPageSize(item.id as any)}
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                        pageSize === item.id
+                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
+                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
+                      }`}
+                    >
+                      <span className="capitalize">{item.label}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">{item.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Orientación */}
+              <div className="space-y-1.5">
+                <label className="block text-slate-700 font-bold">Orientación de Página</label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { id: 'vertical', label: 'Vertical', desc: 'Retrato' },
+                    { id: 'horizontal', label: 'Horizontal', desc: 'Apaisado' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setOrientation(item.id as any)}
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                        orientation === item.id
+                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
+                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({item.desc})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] text-amber-900 font-medium leading-relaxed">
+                ℹ️ El documento se generará con margen <strong>Estrecho</strong> e incluirá el logo institucional de COMIBOL y la tabla de activos asignados.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsWordModalOpen(false)}
+                disabled={isDownloadingWord}
+                className="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadWordReport}
+                disabled={isDownloadingWord}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all disabled:opacity-50"
+              >
+                {isDownloadingWord ? (
+                  <span>Generando Word...</span>
+                ) : (
+                  <>
+                    <HiOutlineArrowDownTray className="text-base" />
+                    <span>Descargar Reporte (.docx)</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

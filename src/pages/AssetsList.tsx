@@ -12,6 +12,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { SearchBar } from '../components/SearchBar';
 import { Pagination } from '../components/Pagination';
 import { formatCurrency } from '../utils/currency';
+import api from '../api/axios.instance';
 import {
   HiOutlineEye,
   HiOutlinePencilSquare,
@@ -19,6 +20,9 @@ import {
   HiOutlineSquares2X2,
   HiOutlineListBullet,
   HiOutlineArrowPath,
+  HiOutlineArrowDownTray,
+  HiOutlineDocumentText,
+  HiXMark,
   HiPlus,
 } from 'react-icons/hi2';
 
@@ -48,6 +52,49 @@ export const AssetsList: React.FC = () => {
   const [assetToDelete, setAssetToDelete] = useState<AssetModel | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
+  // Modal "Reporte Word"
+  const [isWordModalOpen, setIsWordModalOpen] = useState(false);
+  const [pageSize, setPageSize] = useState<'carta' | 'a4' | 'oficio'>('carta');
+  const [orientation, setOrientation] = useState<'vertical' | 'horizontal'>('horizontal');
+  const [isDownloadingWord, setIsDownloadingWord] = useState(false);
+
+  const handleDownloadWordReport = async () => {
+    setIsDownloadingWord(true);
+    try {
+      const response = await api.get('/assets/report-word', {
+        params: {
+          search: search || undefined,
+          category: selectedCategory || undefined,
+          status: selectedStatus || undefined,
+          location: selectedLocation || undefined,
+          pageSize,
+          orientation,
+        },
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Reporte_Activos_Fijos_COMIBOL.docx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setIsWordModalOpen(false);
+      showNotification('success', 'Reporte Word de activos generado exitosamente.');
+    } catch (err: any) {
+      console.error('Error al descargar reporte Word:', err);
+      showNotification('danger', 'No se pudo generar el reporte Word de activos.');
+    } finally {
+      setIsDownloadingWord(false);
+    }
+  };
+
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -62,11 +109,6 @@ export const AssetsList: React.FC = () => {
       locationId: selectedLocation || undefined,
     });
   }, [currentPage, search, selectedCategory, selectedStatus, selectedLocation]);
-
-  const handleFilterChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
-    setter(value);
-    setCurrentPage(1);
-  };
 
   const showNotification = (type: 'success' | 'danger', text: string) => {
     setToastMessage({ type, text });
@@ -217,8 +259,19 @@ export const AssetsList: React.FC = () => {
             </span>
           </div>
 
-          {/* Selector de Vista */}
-          <div className="flex items-center border border-slate-200 rounded-xl p-1 bg-slate-50">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsWordModalOpen(true)}
+              title="Descargar Informe en Word (.docx) de activos según los filtros aplicados"
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-2xs transition-all shrink-0 border border-blue-800"
+            >
+              <HiOutlineArrowDownTray className="text-sm text-amber-400" />
+              <span>Reporte Word</span>
+            </button>
+
+            {/* Selector de Vista */}
+            <div className="flex items-center border border-slate-200 rounded-xl p-1 bg-slate-50">
             <button
               type="button"
               onClick={() => setViewMode('table')}
@@ -240,6 +293,7 @@ export const AssetsList: React.FC = () => {
           </div>
         </div>
       </div>
+    </div>
 
       {/* Carga o Contenido */}
       {isLoading && assets.length === 0 ? (
@@ -385,6 +439,113 @@ export const AssetsList: React.FC = () => {
         confirmText="Sí, Eliminar"
         color="danger"
       />
+
+      {/* Modal Configuración Reporte Word de Activos Fijos */}
+      {isWordModalOpen && (
+        <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl max-w-md w-full space-y-5 relative">
+            <button
+              onClick={() => setIsWordModalOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <HiXMark className="text-lg" />
+            </button>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-blue-900">
+                <HiOutlineDocumentText className="text-xl text-amber-500" />
+                <h3 className="text-base font-bold">Configurar Reporte Word (.docx)</h3>
+              </div>
+              <p className="text-xs text-slate-500">
+                Exportar catálogo de activos fijos según los filtros seleccionados (búsqueda, categoría, estado y ubicación).
+              </p>
+            </div>
+
+            <div className="space-y-4 text-xs font-semibold text-slate-700">
+              {/* Tamaño de Hoja */}
+              <div className="space-y-1.5">
+                <label className="block text-slate-700 font-bold">Tamaño de Hoja</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'carta', label: 'Carta', sub: '8.5" x 11"' },
+                    { id: 'a4', label: 'A4', sub: '210 x 297 mm' },
+                    { id: 'oficio', label: 'Oficio', sub: '8.5" x 14"' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setPageSize(item.id as any)}
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                        pageSize === item.id
+                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
+                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
+                      }`}
+                    >
+                      <span className="capitalize">{item.label}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">{item.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Orientación */}
+              <div className="space-y-1.5">
+                <label className="block text-slate-700 font-bold">Orientación de Página</label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { id: 'vertical', label: 'Vertical', desc: 'Retrato' },
+                    { id: 'horizontal', label: 'Horizontal', desc: 'Apaisado' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setOrientation(item.id as any)}
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                        orientation === item.id
+                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
+                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({item.desc})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] text-amber-900 font-medium leading-relaxed">
+                ℹ️ El documento se generará con formato oficial de la <strong>Dirección de Proyectos y Geología (COMIBOL)</strong>, margen <strong>Estrecho</strong> y secciones de firma.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsWordModalOpen(false)}
+                disabled={isDownloadingWord}
+                className="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadWordReport}
+                disabled={isDownloadingWord}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all disabled:opacity-50"
+              >
+                {isDownloadingWord ? (
+                  <span>Generando Word...</span>
+                ) : (
+                  <>
+                    <HiOutlineArrowDownTray className="text-base" />
+                    <span>Descargar Reporte (.docx)</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

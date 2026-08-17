@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { 
-  HiOutlineComputerDesktop, 
-  HiOutlineTruck, 
-  HiOutlineBriefcase, 
-  HiOutlineArchiveBox 
+import React, { useState, useEffect } from 'react';
+import {
+  HiOutlineComputerDesktop,
+  HiOutlineTruck,
+  HiOutlineBriefcase,
+  HiOutlineArchiveBox
 } from 'react-icons/hi2';
 import { GiMining } from 'react-icons/gi';
 import { getAssetUrl } from '../utils/assets';
@@ -15,13 +15,17 @@ interface AssetImageProps {
   className?: string;
 }
 
-export const AssetImage: React.FC<AssetImageProps> = ({ 
-  src, 
-  alt, 
-  categoryId, 
-  className = "w-full h-full object-cover" 
+export const AssetImage: React.FC<AssetImageProps> = ({
+  src,
+  alt,
+  categoryId,
+  className = "w-full h-full object-cover"
 }) => {
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setError(false);
+  }, [src]);
 
   const getFallbackIcon = () => {
     switch (categoryId) {
@@ -65,10 +69,10 @@ export const AssetImage: React.FC<AssetImageProps> = ({
   }
 
   return (
-    <img 
-      src={getAssetUrl(src)} 
-      alt={alt} 
-      className={`rounded-xl border border-slate-200/50 ${className}`} 
+    <img
+      src={getAssetUrl(src)}
+      alt={alt}
+      className={`rounded-xl border border-slate-200/50 ${className}`}
       onError={() => setError(true)}
       loading="lazy"
     />
