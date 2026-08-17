@@ -28,6 +28,7 @@ export interface AssetModel {
   serialNumber?: string | null;
   unit?: string | null;
   quantity: number;
+  quantityOut?: number;
   purchaseDate?: string | null;
   purchaseYear?: number | null;
   purchaseValue?: number | null;
@@ -57,6 +58,7 @@ export interface CreateAssetDTO {
   serialNumber?: string | null;
   unit?: string;
   quantity?: number;
+  quantityOut?: number;
   purchaseDate?: string | null;
   purchaseValue?: number | null;
   residualValue?: number | null;

@@ -17,6 +17,12 @@ export interface Project {
   };
 }
 
+export interface AssignedAssetInput {
+  assetId: string;
+  quantity: number;
+  observations?: string;
+}
+
 export interface CreateProjectDTO {
   name: string;
   address?: string | null;
@@ -25,6 +31,7 @@ export interface CreateProjectDTO {
   startDate?: string | null;
   endDate?: string | null;
   description?: string | null;
+  assignedAssets?: AssignedAssetInput[];
 }
 
 export interface UpdateProjectDTO extends Partial<CreateProjectDTO> {}

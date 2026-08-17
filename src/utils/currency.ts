@@ -8,6 +8,13 @@ export const formatCurrency = (amountInBOB?: number | null): string => {
 };
 
 /**
+ * Formatea un monto con notación compacta / escala métrica (K, M, B) para Dashboards.
+ */
+export const formatCompactCurrency = (amountInBOB?: number | null): string => {
+  return useCurrencyStore.getState().formatCompactAmount(amountInBOB);
+};
+
+/**
  * Convierte un monto expresado en Pesos Bolivianos (BOB) a un valor numérico en la moneda activa.
  */
 export const convertCurrency = (amountInBOB?: number | null): number => {

@@ -23,7 +23,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.get<{ success: boolean; data: Project[]; pagination: PaginationMeta }>('/projects', {
-        params,
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          search: params?.search,
+          status: params?.status,
+        },
       });
       set({
         projects: response.data.data,

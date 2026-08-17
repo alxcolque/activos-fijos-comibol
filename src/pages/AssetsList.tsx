@@ -10,6 +10,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { SearchBar } from '../components/SearchBar';
+import { Pagination } from '../components/Pagination';
 import { formatCurrency } from '../utils/currency';
 import {
   HiOutlineEye,
@@ -28,6 +29,7 @@ export const AssetsList: React.FC = () => {
     categories,
     statuses,
     locations,
+    pagination,
     isLoading,
     error,
     fetchAssets,
@@ -35,6 +37,7 @@ export const AssetsList: React.FC = () => {
     deleteAsset,
   } = useAssetStore();
 
+  const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -51,12 +54,19 @@ export const AssetsList: React.FC = () => {
 
   useEffect(() => {
     fetchAssets({
+      page: currentPage,
+      limit: 10,
       search: search || undefined,
       categoryId: selectedCategory || undefined,
       statusId: selectedStatus || undefined,
       locationId: selectedLocation || undefined,
     });
-  }, [search, selectedCategory, selectedStatus, selectedLocation]);
+  }, [currentPage, search, selectedCategory, selectedStatus, selectedLocation]);
+
+  const handleFilterChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+    setter(value);
+    setCurrentPage(1);
+  };
 
   const showNotification = (type: 'success' | 'danger', text: string) => {
     setToastMessage({ type, text });
@@ -109,7 +119,7 @@ export const AssetsList: React.FC = () => {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-5 right-5 z-50 p-4 rounded-2xl shadow-xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${
+          className={`fixed top-5 right-5 z-[99999] p-4 rounded-2xl shadow-2xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${
             toastMessage.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
               : 'bg-rose-50 border-rose-200 text-rose-800'
@@ -257,6 +267,8 @@ export const AssetsList: React.FC = () => {
                   <th className="px-4 py-3.5">Código</th>
                   <th className="px-4 py-3.5 text-center">QR</th>
                   <th className="px-4 py-3.5 text-center">Cant.</th>
+                  <th className="px-4 py-3.5 text-center">Salidas</th>
+                  <th className="px-4 py-3.5 text-center">Disponibles</th>
                   <th className="px-4 py-3.5 text-center">Unidad</th>
                   <th className="px-4 py-3.5">Nombre del Activo</th>
                   <th className="px-4 py-3.5 text-center">Estado</th>
@@ -277,6 +289,10 @@ export const AssetsList: React.FC = () => {
                       <QRBadge value={item.qrCode || item.code} size={36} />
                     </td>
                     <td className="px-4 py-4 text-center font-bold text-slate-700">{item.quantity}</td>
+                    <td className="px-4 py-4 text-center font-bold text-rose-600">{item.quantityOut || 0}</td>
+                    <td className="px-4 py-4 text-center font-bold text-emerald-600">
+                      {Math.max(0, item.quantity - (item.quantityOut || 0))}
+                    </td>
                     <td className="px-4 py-4 text-center font-semibold text-slate-500">{item.unit || 'PZA'}</td>
                     <td className="px-4 py-4 font-bold text-slate-800">
                       <div className="flex flex-col">
@@ -346,6 +362,17 @@ export const AssetsList: React.FC = () => {
             <AssetCard key={asset.id} asset={asset as any} />
           ))}
         </div>
+      )}
+
+      {/* Control de Paginación */}
+      {pagination && pagination.totalPages > 1 && (
+        <Pagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.total}
+          itemsPerPage={10}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
       )}
 
       {/* Modal Confirmación de Eliminación */}

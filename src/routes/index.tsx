@@ -6,6 +6,7 @@ import CategoriesPage from '../pages/Categories';
 import StatusesPage from '../pages/Statuses';
 import LocationsPage from '../pages/Locations';
 import ProjectsPage from '../pages/Projects';
+import ProjectShowPage from '../pages/ProjectShow';
 import AssetsList from '../pages/AssetsList';
 import AssetDetail from '../pages/AssetDetail';
 import AssetForm from '../pages/AssetForm';
@@ -35,6 +36,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="statuses" element={<StatusesPage />} />
         <Route path="locations" element={<LocationsPage />} />
         <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/:id" element={<ProjectShowPage />} />
         <Route path="assets" element={<AssetsList />} />
         <Route path="assets/new" element={<AssetForm />} />
         <Route path="assets/:id" element={<AssetDetail />} />

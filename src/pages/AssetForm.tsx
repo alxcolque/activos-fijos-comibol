@@ -79,13 +79,14 @@ export const AssetForm: React.FC = () => {
         },
       });
 
-      if (res.data?.data?.url || res.data?.data?.path) {
-        const photoPath = res.data.data.url || `/${res.data.data.path}`;
+      if (res.data?.data?.path || res.data?.data?.url) {
+        const photoPath = res.data.data.path || res.data.data.url;
         handleInputChange('photo', photoPath);
       }
     } catch (err: any) {
       const msg = err.response?.data?.message || err.customMessage || 'Error al subir la imagen al servidor.';
       setUploadImageError(msg);
+      setPreviewUrl(null);
     } finally {
       setIsUploadingImage(false);
     }
@@ -180,7 +181,7 @@ export const AssetForm: React.FC = () => {
         residualValue: Number(formData.residualValue) || undefined,
         description: formData.description.trim() || undefined,
         observations: formData.observations.trim() || undefined,
-        photo: formData.photo.trim() || undefined,
+        photo: formData.photo.trim() ? formData.photo.trim() : (isEditMode ? null : undefined),
       };
 
       if (isEditMode && id) {
@@ -586,11 +587,11 @@ export const AssetForm: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isUploadingImage}
               className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 rounded-xl font-bold text-xs shadow-xs transition-all disabled:opacity-50"
             >
               <HiOutlineCheck className="text-base" />
-              <span>{isLoading ? 'Guardando...' : isEditMode ? 'Guardar Cambios' : 'Registrar Activo'}</span>
+              <span>{isUploadingImage ? 'Subiendo imagen...' : isLoading ? 'Guardando...' : isEditMode ? 'Guardar Cambios' : 'Registrar Activo'}</span>
             </button>
           </div>
         </div>

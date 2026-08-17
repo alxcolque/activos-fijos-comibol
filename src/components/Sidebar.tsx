@@ -3,15 +3,15 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import { AppLogo } from './AppLogo';
-import { 
-  HiOutlineSquares2X2, 
-  HiOutlineBriefcase, 
+import {
+  HiOutlineSquares2X2,
+  HiOutlineBriefcase,
   HiOutlineTag,
   HiOutlineCheckCircle,
   HiOutlineMapPin,
   HiOutlineFolder,
-  HiOutlineDocumentChartBar, 
-  HiOutlineCog6Tooth,
+  /* HiOutlineDocumentChartBar,
+  HiOutlineCog6Tooth, */
   HiUser
 } from 'react-icons/hi2';
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
@@ -22,24 +22,23 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
 
   const menuItems = [
-    { name: 'Dashboard', path: '/', icon: HiOutlineSquares2X2 },
+    { name: 'Panel', path: '/', icon: HiOutlineSquares2X2 },
     { name: 'Activos', path: '/assets', icon: HiOutlineBriefcase },
+    { name: 'Proyectos', path: '/projects', icon: HiOutlineFolder },
     { name: 'Categorías', path: '/categories', icon: HiOutlineTag },
     { name: 'Estados', path: '/statuses', icon: HiOutlineCheckCircle },
     { name: 'Ubicaciones', path: '/locations', icon: HiOutlineMapPin },
-    { name: 'Proyectos', path: '/projects', icon: HiOutlineFolder },
-    { name: 'Reportes', path: '/reports', icon: HiOutlineDocumentChartBar },
-    { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth },
+    /* { name: 'Reportes', path: '/reports', icon: HiOutlineDocumentChartBar }, */
+    /* { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth }, */
   ];
 
   const userName = user?.fullName || user?.name || 'Administrador';
   const userRole = user?.role || 'Administrador COMIBOL';
 
   return (
-    <aside 
-      className={`hidden md:flex flex-col border-r border-blue-800 bg-blue-600 h-screen sticky top-0 transition-all duration-300 z-30 ${
-        sidebarCollapsed ? 'w-20' : 'w-64'
-      }`}
+    <aside
+      className={`hidden md:flex flex-col border-r border-blue-800 bg-blue-600 h-screen sticky top-0 transition-all duration-300 z-30 ${sidebarCollapsed ? 'w-20' : 'w-64'
+        }`}
     >
       {/* Header del Sidebar */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-blue-700/60 shrink-0 relative">
@@ -68,9 +67,9 @@ export const Sidebar: React.FC = () => {
       <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = 
-            item.path === '/' 
-              ? location.pathname === '/' 
+          const isActive =
+            item.path === '/'
+              ? location.pathname === '/'
               : location.pathname.startsWith(item.path);
 
           return (
@@ -80,11 +79,10 @@ export const Sidebar: React.FC = () => {
               title={sidebarCollapsed ? item.name : undefined}
               className={({ isActive: isLinkActive }) => {
                 const active = isLinkActive || isActive;
-                return `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 font-semibold text-sm group ${
-                  active 
-                    ? 'bg-amber-500 text-blue-900 shadow-sm shadow-amber-500/10' 
-                    : 'text-blue-100 hover:bg-blue-700 hover:text-white'
-                }`;
+                return `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 font-semibold text-sm group ${active
+                  ? 'bg-amber-500 text-blue-900 shadow-sm shadow-amber-500/10'
+                  : 'text-blue-100 hover:bg-blue-700 hover:text-white'
+                  }`;
               }}
             >
               {({ isActive: isLinkActive }) => {

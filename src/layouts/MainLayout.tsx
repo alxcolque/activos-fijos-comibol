@@ -8,15 +8,15 @@ import { useAuthStore } from '../store/authStore';
 import { useAssetStore } from '../store/assetStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { AppLogo } from '../components/AppLogo';
-import { 
-  HiOutlineSquares2X2, 
-  HiOutlineBriefcase, 
+import {
+  HiOutlineSquares2X2,
+  HiOutlineBriefcase,
   HiOutlineTag,
   HiOutlineCheckCircle,
   HiOutlineMapPin,
   HiOutlineFolder,
-  HiOutlineDocumentChartBar, 
-  HiOutlineCog6Tooth,
+  /* HiOutlineDocumentChartBar,
+  HiOutlineCog6Tooth, */
   HiXMark,
   HiUser
 } from 'react-icons/hi2';
@@ -41,14 +41,14 @@ export const MainLayout: React.FC = () => {
   }, [location.pathname]);
 
   const menuItems = [
-    { name: 'Dashboard', path: '/', icon: HiOutlineSquares2X2 },
+    { name: 'Panel', path: '/', icon: HiOutlineSquares2X2 },
     { name: 'Activos', path: '/assets', icon: HiOutlineBriefcase },
+    { name: 'Proyectos', path: '/projects', icon: HiOutlineFolder },
     { name: 'Categorías', path: '/categories', icon: HiOutlineTag },
     { name: 'Estados', path: '/statuses', icon: HiOutlineCheckCircle },
     { name: 'Ubicaciones', path: '/locations', icon: HiOutlineMapPin },
-    { name: 'Proyectos', path: '/projects', icon: HiOutlineFolder },
-    { name: 'Reportes', path: '/reports', icon: HiOutlineDocumentChartBar },
-    { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth },
+    /* { name: 'Reportes', path: '/reports', icon: HiOutlineDocumentChartBar }, */
+    /*  { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth }, */
   ];
 
   const userName = user?.fullName || user?.name || 'Administrador';
@@ -78,9 +78,9 @@ export const MainLayout: React.FC = () => {
       {mobileDrawerOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
           {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300" 
-            onClick={() => setMobileDrawerOpen(false)} 
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300"
+            onClick={() => setMobileDrawerOpen(false)}
           />
           {/* Menu Drawer */}
           <div className="relative flex flex-col w-72 max-w-[80vw] bg-blue-600 h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
@@ -100,20 +100,19 @@ export const MainLayout: React.FC = () => {
             <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
               {menuItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = 
-                  item.path === '/' 
-                    ? location.pathname === '/' 
+                const isActive =
+                  item.path === '/'
+                    ? location.pathname === '/'
                     : location.pathname.startsWith(item.path);
 
                 return (
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-colors font-semibold text-sm ${
-                      isActive 
-                        ? 'bg-amber-500 text-blue-900 shadow-sm' 
-                        : 'text-blue-100 hover:bg-blue-700 active:bg-blue-850'
-                    }`}
+                    className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-colors font-semibold text-sm ${isActive
+                      ? 'bg-amber-500 text-blue-900 shadow-sm'
+                      : 'text-blue-100 hover:bg-blue-700 active:bg-blue-850'
+                      }`}
                   >
                     <Icon className={`text-xl shrink-0 ${isActive ? 'text-blue-900' : 'text-blue-200'}`} />
                     <span>{item.name}</span>

@@ -39,8 +39,8 @@ export const useAssetStore = create<AssetState>((set, get) => ({
     try {
       const response = await api.get<{ success: boolean; data: AssetModel[]; pagination: PaginationMeta }>('/assets', {
         params: {
-          page: params?.page,
-          limit: params?.limit || 20,
+          page: params?.page || 1,
+          limit: params?.limit || 10,
           search: params?.search,
           category: params?.categoryId,
           status: params?.statusId,

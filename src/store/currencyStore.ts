@@ -21,6 +21,7 @@ interface CurrencyState {
   setCurrency: (currency: CurrencyType) => void;
   fetchExchangeRate: () => Promise<void>;
   formatAmount: (amountInBOB?: number | null) => string;
+  formatCompactAmount: (amountInBOB?: number | null) => string;
   convertFromBOB: (amountInBOB?: number | null) => number;
 }
 
@@ -90,6 +91,30 @@ export const useCurrencyStore = create<CurrencyState>()(
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }).format(num);
+      },
+
+      formatCompactAmount: (amountInBOB?: number | null) => {
+        if (amountInBOB == null || isNaN(Number(amountInBOB))) return '—';
+        const num = Number(amountInBOB);
+        const { currency, exchangeRate } = get();
+        const converted = currency === 'USD' ? num / (exchangeRate || 11.86) : num;
+        const prefix = currency === 'USD' ? '$' : 'Bs';
+
+        const abs = Math.abs(converted);
+        if (abs >= 1e9) {
+          const val = (converted / 1e9).toLocaleString('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+          return `${prefix} ${val}B`;
+        }
+        if (abs >= 1e6) {
+          const val = (converted / 1e6).toLocaleString('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+          return `${prefix} ${val}M`;
+        }
+        if (abs >= 1e3) {
+          const val = (converted / 1e3).toLocaleString('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+          return `${prefix} ${val}K`;
+        }
+
+        return get().formatAmount(amountInBOB);
       },
     }),
     {
