@@ -161,11 +161,10 @@ export const AssetsList: React.FC = () => {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-5 right-5 z-[99999] p-4 rounded-2xl shadow-2xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${
-            toastMessage.type === 'success'
+          className={`fixed top-5 right-5 z-[99999] p-4 rounded-2xl shadow-2xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${toastMessage.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
               : 'bg-rose-50 border-rose-200 text-rose-800'
-          }`}
+            }`}
         >
           {toastMessage.text}
         </div>
@@ -272,28 +271,26 @@ export const AssetsList: React.FC = () => {
 
             {/* Selector de Vista */}
             <div className="flex items-center border border-slate-200 rounded-xl p-1 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'table' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <HiOutlineListBullet className="text-base" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('cards')}
-              className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'cards' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <HiOutlineSquares2X2 className="text-base" />
-            </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'table' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+              >
+                <HiOutlineListBullet className="text-base" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`p-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'cards' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+              >
+                <HiOutlineSquares2X2 className="text-base" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       {/* Carga o Contenido */}
       {isLoading && assets.length === 0 ? (
@@ -338,6 +335,34 @@ export const AssetsList: React.FC = () => {
                 {assets.map((item, index) => (
                   <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-4 py-4 text-center font-bold text-slate-400">{index + 1}</td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/assets/${item.id}`)}
+                          title="Ver Ficha Técnica"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                        >
+                          <HiOutlineEye className="text-base" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/assets/${item.id}/edit`)}
+                          title="Editar Activo"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          <HiOutlinePencilSquare className="text-base" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteRequest(item, e)}
+                          title="Eliminar Activo"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        >
+                          <HiOutlineTrash className="text-base" />
+                        </button>
+                      </div>
+                    </td>
                     <td className="px-4 py-4 font-mono font-bold text-amber-600">{item.code}</td>
                     <td className="px-4 py-4 text-center">
                       <QRBadge value={item.qrCode || item.code} size={36} />
@@ -375,34 +400,6 @@ export const AssetsList: React.FC = () => {
                     </td>
                     <td className="px-4 py-4 text-right font-bold text-emerald-700">
                       {formatCurrency(item.balance)}
-                    </td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/assets/${item.id}`)}
-                          title="Ver Ficha Técnica"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                        >
-                          <HiOutlineEye className="text-base" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/assets/${item.id}/edit`)}
-                          title="Editar Activo"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        >
-                          <HiOutlinePencilSquare className="text-base" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteRequest(item, e)}
-                          title="Eliminar Activo"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        >
-                          <HiOutlineTrash className="text-base" />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -475,11 +472,10 @@ export const AssetsList: React.FC = () => {
                       key={item.id}
                       type="button"
                       onClick={() => setPageSize(item.id as any)}
-                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
-                        pageSize === item.id
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${pageSize === item.id
                           ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
                           : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
-                      }`}
+                        }`}
                     >
                       <span className="capitalize">{item.label}</span>
                       <span className="text-[10px] text-slate-400 font-normal">{item.sub}</span>
@@ -500,11 +496,10 @@ export const AssetsList: React.FC = () => {
                       key={item.id}
                       type="button"
                       onClick={() => setOrientation(item.id as any)}
-                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
-                        orientation === item.id
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${orientation === item.id
                           ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
                           : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
-                      }`}
+                        }`}
                     >
                       <span>{item.label}</span>
                       <span className="text-[10px] text-slate-400 font-normal">({item.desc})</span>

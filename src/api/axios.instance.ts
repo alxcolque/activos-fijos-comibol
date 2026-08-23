@@ -9,10 +9,20 @@ const getApiBaseURL = () => {
     return `${clean}/v1`;
   }
 
-  const serverUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
-  if (serverUrl.endsWith('/api/v1')) return serverUrl;
-  if (serverUrl.endsWith('/api')) return `${serverUrl}/v1`;
-  return `${serverUrl}/api/v1`;
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    const serverUrl = envUrl.replace(/\/+$/, '');
+    if (serverUrl.endsWith('/api/v1')) return serverUrl;
+    if (serverUrl.endsWith('/api')) return `${serverUrl}/v1`;
+    return `${serverUrl}/api/v1`;
+  }
+
+  console.error(
+    '[Config Error] No se encontró VITE_API_BASE_URL ni VITE_API_URL en el archivo .env. Verifique su configuración de variables de entorno.'
+  );
+  throw new Error(
+    'Error de configuración: VITE_API_BASE_URL / VITE_API_URL no está definida en las variables de entorno (.env).'
+  );
 };
 
 const baseURL = getApiBaseURL();
