@@ -14,10 +14,10 @@ export const BottomNavigation: React.FC = () => {
 
   const navItems = [
     { name: 'Inicio', path: '/', icon: HiOutlineSquares2X2 },
-    { name: 'Activos', path: '/assets', icon: HiOutlineBriefcase },
+    { name: 'Activos', path: '/activos', icon: HiOutlineBriefcase },
     { name: 'divider', path: '', icon: () => null }, // Espacio para el botón central +
-    { name: 'Reportes', path: '/reports', icon: HiOutlineDocumentChartBar },
-    { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth },
+    { name: 'Reportes', path: '/reportes', icon: HiOutlineDocumentChartBar },
+    { name: 'Ajustes', path: '/configuracion', icon: HiOutlineCog6Tooth },
   ];
 
   return (
@@ -28,7 +28,7 @@ export const BottomNavigation: React.FC = () => {
             <div key="fab-placeholder" className="w-12 h-12 flex justify-center items-center relative -top-4">
               <button
                 type="button"
-                onClick={() => navigate('/assets/new')}
+                onClick={() => navigate('/activos/nuevo')}
                 className="w-14 h-14 bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/30 text-white font-bold text-2xl rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0"
               >
                 <HiOutlinePlus />

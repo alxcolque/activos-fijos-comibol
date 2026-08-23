@@ -127,7 +127,7 @@ export const Dashboard: React.FC = () => {
             <button
               type="button"
               className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 rounded-xl font-extrabold text-xs shadow-xs transition-all shrink-0"
-              onClick={() => navigate('/projects')}
+              onClick={() => navigate('/proyectos')}
             >
               <HiOutlineBuildingOffice2 className="text-base" />
               <span>Proyectos Mineros</span>
@@ -191,7 +191,7 @@ export const Dashboard: React.FC = () => {
               action={
                 <button
                   type="button"
-                  onClick={() => navigate('/projects')}
+                  onClick={() => navigate('/proyectos')}
                   className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors"
                 >
                   <span>Ver todos los proyectos</span>
@@ -205,7 +205,7 @@ export const Dashboard: React.FC = () => {
                     <HiOutlineFolderOpen className="text-3xl text-slate-300 mx-auto" />
                     <p>No existen proyectos activos registrados actualmente.</p>
                     <button
-                      onClick={() => navigate('/projects')}
+                      onClick={() => navigate('/proyectos')}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-900 rounded-lg text-xs font-bold hover:bg-amber-100 transition-all border border-amber-200"
                     >
                       <HiOutlinePlus className="text-sm" />
@@ -217,7 +217,7 @@ export const Dashboard: React.FC = () => {
                     {activeProjects.map((p) => (
                       <div
                         key={p.id}
-                        onClick={() => navigate(`/projects/${p.id}`)}
+                        onClick={() => navigate(`/proyectos/${p.id}`)}
                         className="p-4 bg-slate-50/70 hover:bg-amber-50/60 border border-slate-200/80 hover:border-amber-300 rounded-2xl cursor-pointer transition-all space-y-2.5 group"
                       >
                         <div className="flex items-center justify-between">
@@ -352,7 +352,7 @@ export const Dashboard: React.FC = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors"
-                onClick={() => navigate('/assets')}
+                onClick={() => navigate('/activos')}
               >
                 <span>Ver catálogo completo</span>
                 <HiOutlineArrowRight />
@@ -374,7 +374,7 @@ export const Dashboard: React.FC = () => {
                     <tr
                       key={asset.id}
                       className="hover:bg-slate-50/80 cursor-pointer transition-colors"
-                      onClick={() => navigate(`/assets/${asset.id}`)}
+                      onClick={() => navigate(`/activos/${asset.id}`)}
                     >
                       <td className="py-3.5 px-4 font-mono font-bold text-amber-700">{asset.code}</td>
                       <td className="py-3.5 px-4 font-bold text-slate-800">{asset.name}</td>
@@ -388,7 +388,7 @@ export const Dashboard: React.FC = () => {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/assets/${asset.id}`);
+                            navigate(`/activos/${asset.id}`);
                           }}
                           className="px-2.5 py-1 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors"
                         >

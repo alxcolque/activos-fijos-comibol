@@ -186,10 +186,10 @@ export const AssetForm: React.FC = () => {
 
       if (isEditMode && id) {
         await updateAsset(id, payload);
-        navigate(`/assets/${id}`);
+        navigate(`/activos/${id}`);
       } else {
         await createAsset(payload);
-        navigate('/assets');
+        navigate('/activos');
       }
     } catch (err: any) {
       setSubmitError(err.message || 'Ocurrió un error al guardar el activo fijo.');
@@ -212,7 +212,7 @@ export const AssetForm: React.FC = () => {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate(isEditMode ? `/assets/${id}` : '/assets')}
+          onClick={() => navigate(isEditMode ? `/activos/${id}` : '/activos')}
           className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors shrink-0"
         >
           <HiOutlineArrowLeft className="text-xl" />
@@ -580,7 +580,7 @@ export const AssetForm: React.FC = () => {
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navigate(isEditMode ? `/assets/${id}` : '/assets')}
+              onClick={() => navigate(isEditMode ? `/activos/${id}` : '/activos')}
               className="px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100 transition-colors"
             >
               Cancelar

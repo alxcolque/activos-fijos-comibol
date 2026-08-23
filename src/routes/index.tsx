@@ -32,17 +32,17 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="categories" element={<CategoriesPage />} />
-        <Route path="statuses" element={<StatusesPage />} />
-        <Route path="locations" element={<LocationsPage />} />
-        <Route path="projects" element={<ProjectsPage />} />
-        <Route path="projects/:id" element={<ProjectShowPage />} />
-        <Route path="assets" element={<AssetsList />} />
-        <Route path="assets/new" element={<AssetForm />} />
-        <Route path="assets/:id" element={<AssetDetail />} />
-        <Route path="assets/:id/edit" element={<AssetForm />} />
-        <Route path="reports" element={<Reports />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="categorias" element={<CategoriesPage />} />
+        <Route path="estados" element={<StatusesPage />} />
+        <Route path="ubicaciones" element={<LocationsPage />} />
+        <Route path="proyectos" element={<ProjectsPage />} />
+        <Route path="proyectos/:id" element={<ProjectShowPage />} />
+        <Route path="activos" element={<AssetsList />} />
+        <Route path="activos/nuevo" element={<AssetForm />} />
+        <Route path="activos/:id" element={<AssetDetail />} />
+        <Route path="activos/:id/editar" element={<AssetForm />} />
+        <Route path="reportes" element={<Reports />} />
+        <Route path="configuracion" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

@@ -36,7 +36,7 @@ export const AssetDetail: React.FC = () => {
         <button
           type="button"
           className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-xl text-xs transition-all"
-          onClick={() => navigate('/assets')}
+          onClick={() => navigate('/activos')}
         >
           Volver al listado
         </button>
@@ -63,7 +63,7 @@ export const AssetDetail: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/assets')}
+            onClick={() => navigate('/activos')}
             className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors shrink-0"
           >
             <HiOutlineArrowLeft className="text-xl" />
@@ -81,7 +81,7 @@ export const AssetDetail: React.FC = () => {
           <button
             type="button"
             className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-xl shadow-xs transition-all text-xs shrink-0"
-            onClick={() => navigate(`/assets/${asset.id}/edit`)}
+            onClick={() => navigate(`/activos/${asset.id}/editar`)}
           >
             <HiOutlinePencilSquare className="text-base" />
             <span>Editar Activo</span>
@@ -188,11 +188,11 @@ export const AssetDetail: React.FC = () => {
               {/* <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Depreciación Anual</span>
                 <span className="text-sm font-semibold text-slate-700 mt-1 block">{asset.dep != null ? `${asset.dep}%` : '—'}</span>
-              </div>
+              </div>*/}
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Depreciación Acumulada</span>
                 <span className="text-sm font-bold text-amber-700 mt-1 block">{formatCurrency(asset.depac)}</span>
-              </div> */}
+              </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Saldo (Valor Neto)</span>
                 <span className="text-sm font-bold text-emerald-700 mt-1 block">{formatCurrency(asset.balance)}</span>

@@ -383,7 +383,7 @@ export const ProjectShowPage: React.FC = () => {
     return (
       <div className="space-y-6">
         <button
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/proyectos')}
           className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
         >
           <HiArrowLeft />
@@ -415,7 +415,7 @@ export const ProjectShowPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/proyectos')}
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors mb-1"
           >
             <HiArrowLeft className="text-sm" />

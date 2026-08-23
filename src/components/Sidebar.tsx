@@ -23,13 +23,13 @@ export const Sidebar: React.FC = () => {
 
   const menuItems = [
     { name: 'Panel', path: '/', icon: HiOutlineSquares2X2 },
-    { name: 'Activos', path: '/assets', icon: HiOutlineBriefcase },
-    { name: 'Proyectos', path: '/projects', icon: HiOutlineFolder },
-    { name: 'Categorías', path: '/categories', icon: HiOutlineTag },
-    { name: 'Estados', path: '/statuses', icon: HiOutlineCheckCircle },
-    { name: 'Ubicaciones', path: '/locations', icon: HiOutlineMapPin },
-    /* { name: 'Reportes', path: '/reports', icon: HiOutlineDocumentChartBar }, */
-    /* { name: 'Ajustes', path: '/settings', icon: HiOutlineCog6Tooth }, */
+    { name: 'Activos', path: '/activos', icon: HiOutlineBriefcase },
+    { name: 'Proyectos', path: '/proyectos', icon: HiOutlineFolder },
+    { name: 'Categorías', path: '/categorias', icon: HiOutlineTag },
+    { name: 'Estados', path: '/estados', icon: HiOutlineCheckCircle },
+    { name: 'Ubicaciones', path: '/ubicaciones', icon: HiOutlineMapPin },
+    /* { name: 'Reportes', path: '/reportes', icon: HiOutlineDocumentChartBar }, */
+    /* { name: 'Ajustes', path: '/configuracion', icon: HiOutlineCog6Tooth }, */
   ];
 
   const userName = user?.fullName || user?.name || 'Administrador';

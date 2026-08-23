@@ -17,7 +17,7 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset }) => {
 
   return (
     <div
-      onClick={() => navigate(`/assets/${asset.id}`)}
+      onClick={() => navigate(`/activos/${asset.id}`)}
       className="border border-slate-200/80 bg-white hover:-translate-y-1 hover:shadow-md transition-all duration-200 rounded-2xl cursor-pointer overflow-hidden flex flex-col shadow-xs"
     >
       <div className="flex flex-col h-40 overflow-hidden relative shrink-0 bg-slate-100">

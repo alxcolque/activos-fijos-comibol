@@ -58,7 +58,7 @@ export const ProjectsPage: React.FC = () => {
   };
 
   const handleOpenShow = (project: Project) => {
-    navigate(`/projects/${project.id}`);
+    navigate(`/proyectos/${project.id}`);
   };
 
   const handleFormSubmit = async (data: CreateProjectDTO) => {

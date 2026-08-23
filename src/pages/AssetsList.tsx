@@ -177,7 +177,7 @@ export const AssetsList: React.FC = () => {
           <button
             type="button"
             className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 rounded-xl font-bold text-xs shadow-sm transition-all shrink-0"
-            onClick={() => navigate('/assets/new')}
+            onClick={() => navigate('/activos/nuevo')}
           >
             <HiPlus className="text-base" />
             <span>Nuevo Activo</span>
@@ -339,7 +339,7 @@ export const AssetsList: React.FC = () => {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
-                          onClick={() => navigate(`/assets/${item.id}`)}
+                          onClick={() => navigate(`/activos/${item.id}`)}
                           title="Ver Ficha Técnica"
                           className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                         >
@@ -347,7 +347,7 @@ export const AssetsList: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => navigate(`/assets/${item.id}/edit`)}
+                          onClick={() => navigate(`/activos/${item.id}/editar`)}
                           title="Editar Activo"
                           className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                         >

@@ -110,7 +110,7 @@ export const Header: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setProfileOpen(false);
-                      navigate('/settings');
+                      navigate('/configuracion');
                     }}
                     className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                   >
