@@ -75,4 +75,5 @@ export interface AssetQueryParams {
   categoryId?: string;
   statusId?: string;
   locationId?: string;
+  calculationDate?: string;
 }

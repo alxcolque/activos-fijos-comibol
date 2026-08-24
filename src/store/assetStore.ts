@@ -45,6 +45,7 @@ export const useAssetStore = create<AssetState>((set, get) => ({
           category: params?.categoryId,
           status: params?.statusId,
           location: params?.locationId,
+          calculationDate: params?.calculationDate,
         },
       });
       set({

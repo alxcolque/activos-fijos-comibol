@@ -21,8 +21,6 @@ import {
   HiOutlineListBullet,
   HiOutlineArrowPath,
   HiOutlineArrowDownTray,
-  HiOutlineDocumentText,
-  HiXMark,
   HiPlus,
 } from 'react-icons/hi2';
 
@@ -52,46 +50,44 @@ export const AssetsList: React.FC = () => {
   const [assetToDelete, setAssetToDelete] = useState<AssetModel | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
-  // Modal "Reporte Word"
-  const [isWordModalOpen, setIsWordModalOpen] = useState(false);
-  const [pageSize, setPageSize] = useState<'carta' | 'a4' | 'oficio'>('carta');
-  const [orientation, setOrientation] = useState<'vertical' | 'horizontal'>('horizontal');
-  const [isDownloadingWord, setIsDownloadingWord] = useState(false);
+  // Excel Report Download & Depreciation calculation date
+  const [calculationDate, setCalculationDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
 
-  const handleDownloadWordReport = async () => {
-    setIsDownloadingWord(true);
+  const handleDownloadExcelReport = async () => {
+    setIsDownloadingExcel(true);
     try {
-      const response = await api.get('/assets/report-word', {
+      const response = await api.get('/assets/report-excel', {
         params: {
           search: search || undefined,
           category: selectedCategory || undefined,
           status: selectedStatus || undefined,
           location: selectedLocation || undefined,
-          pageSize,
-          orientation,
+          calculationDate: calculationDate || undefined,
         },
         responseType: 'blob',
       });
 
       const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'Reporte_Activos_Fijos_COMIBOL.docx');
+      link.setAttribute('download', 'Reporte_Activos_Fijos_COMIBOL.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      setIsWordModalOpen(false);
-      showNotification('success', 'Reporte Word de activos generado exitosamente.');
+      showNotification('success', 'Reporte Excel de activos generado exitosamente.');
     } catch (err: any) {
-      console.error('Error al descargar reporte Word:', err);
-      showNotification('danger', 'No se pudo generar el reporte Word de activos.');
+      console.error('Error al descargar reporte Excel:', err);
+      showNotification('danger', 'No se pudo generar el reporte Excel de activos.');
     } finally {
-      setIsDownloadingWord(false);
+      setIsDownloadingExcel(false);
     }
   };
 
@@ -107,8 +103,9 @@ export const AssetsList: React.FC = () => {
       categoryId: selectedCategory || undefined,
       statusId: selectedStatus || undefined,
       locationId: selectedLocation || undefined,
+      calculationDate: calculationDate || undefined,
     });
-  }, [currentPage, search, selectedCategory, selectedStatus, selectedLocation]);
+  }, [currentPage, search, selectedCategory, selectedStatus, selectedLocation, calculationDate]);
 
   const showNotification = (type: 'success' | 'danger', text: string) => {
     setToastMessage({ type, text });
@@ -120,6 +117,7 @@ export const AssetsList: React.FC = () => {
     setSelectedCategory('');
     setSelectedStatus('');
     setSelectedLocation('');
+    setCalculationDate(new Date().toISOString().split('T')[0]);
   };
 
   const handleDeleteRequest = (asset: AssetModel, e: React.MouseEvent) => {
@@ -162,8 +160,8 @@ export const AssetsList: React.FC = () => {
       {toastMessage && (
         <div
           className={`fixed top-5 right-5 z-[99999] p-4 rounded-2xl shadow-2xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${toastMessage.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : 'bg-rose-50 border-rose-200 text-rose-800'
             }`}
         >
           {toastMessage.text}
@@ -258,15 +256,34 @@ export const AssetsList: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Selector de Fecha para Cálculo de Depreciación */}
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl shadow-2xs text-xs"
+              title="Calcular depreciación al: "
+            >
+              <span className="font-bold text-slate-600 whitespace-nowrap">Calcular depreciación al:</span>
+              <input
+                type="date"
+                value={calculationDate}
+                onChange={(e) => {
+                  setCalculationDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                title="Calcular depreciación al: "
+                className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs"
+              />
+            </div>
+
             <button
               type="button"
-              onClick={() => setIsWordModalOpen(true)}
-              title="Descargar Informe en Word (.docx) de activos según los filtros aplicados"
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-2xs transition-all shrink-0 border border-blue-800"
+              onClick={handleDownloadExcelReport}
+              disabled={isDownloadingExcel}
+              title="Descargar Reporte en Excel (.xlsx) de activos según los filtros aplicados"
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-2xs transition-all shrink-0 border border-emerald-800 disabled:opacity-50"
             >
-              <HiOutlineArrowDownTray className="text-sm text-amber-400" />
-              <span>Reporte Word</span>
+              <HiOutlineArrowDownTray className="text-sm text-emerald-200" />
+              <span>{isDownloadingExcel ? 'Generando Excel...' : 'Reporte Excel'}</span>
             </button>
 
             {/* Selector de Vista */}
@@ -315,6 +332,7 @@ export const AssetsList: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="px-4 py-3.5 w-12 text-center">N°</th>
+                  <th className="px-4 py-3.5 text-right">Acciones</th>
                   <th className="px-4 py-3.5">Código</th>
                   <th className="px-4 py-3.5 text-center">QR</th>
                   <th className="px-4 py-3.5 text-center">Cant.</th>
@@ -328,7 +346,6 @@ export const AssetsList: React.FC = () => {
                   <th className="px-4 py-3.5 text-right">Depreciación</th>
                   <th className="px-4 py-3.5 text-right">Dep. Acumulada</th>
                   <th className="px-4 py-3.5 text-right">Saldo</th>
-                  <th className="px-4 py-3.5 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -436,111 +453,6 @@ export const AssetsList: React.FC = () => {
         confirmText="Sí, Eliminar"
         color="danger"
       />
-
-      {/* Modal Configuración Reporte Word de Activos Fijos */}
-      {isWordModalOpen && (
-        <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl max-w-md w-full space-y-5 relative">
-            <button
-              onClick={() => setIsWordModalOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
-            >
-              <HiXMark className="text-lg" />
-            </button>
-
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-blue-900">
-                <HiOutlineDocumentText className="text-xl text-amber-500" />
-                <h3 className="text-base font-bold">Configurar Reporte Word (.docx)</h3>
-              </div>
-              <p className="text-xs text-slate-500">
-                Exportar catálogo de activos fijos según los filtros seleccionados (búsqueda, categoría, estado y ubicación).
-              </p>
-            </div>
-
-            <div className="space-y-4 text-xs font-semibold text-slate-700">
-              {/* Tamaño de Hoja */}
-              <div className="space-y-1.5">
-                <label className="block text-slate-700 font-bold">Tamaño de Hoja</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'carta', label: 'Carta', sub: '8.5" x 11"' },
-                    { id: 'a4', label: 'A4', sub: '210 x 297 mm' },
-                    { id: 'oficio', label: 'Oficio', sub: '8.5" x 14"' },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setPageSize(item.id as any)}
-                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${pageSize === item.id
-                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
-                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
-                        }`}
-                    >
-                      <span className="capitalize">{item.label}</span>
-                      <span className="text-[10px] text-slate-400 font-normal">{item.sub}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Orientación */}
-              <div className="space-y-1.5">
-                <label className="block text-slate-700 font-bold">Orientación de Página</label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {[
-                    { id: 'vertical', label: 'Vertical', desc: 'Retrato' },
-                    { id: 'horizontal', label: 'Horizontal', desc: 'Apaisado' },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setOrientation(item.id as any)}
-                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${orientation === item.id
-                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
-                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
-                        }`}
-                    >
-                      <span>{item.label}</span>
-                      <span className="text-[10px] text-slate-400 font-normal">({item.desc})</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] text-amber-900 font-medium leading-relaxed">
-                ℹ️ El documento se generará con formato oficial de la <strong>Dirección de Proyectos y Geología (COMIBOL)</strong>, margen <strong>Estrecho</strong> y secciones de firma.
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsWordModalOpen(false)}
-                disabled={isDownloadingWord}
-                className="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadWordReport}
-                disabled={isDownloadingWord}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all disabled:opacity-50"
-              >
-                {isDownloadingWord ? (
-                  <span>Generando Word...</span>
-                ) : (
-                  <>
-                    <HiOutlineArrowDownTray className="text-base" />
-                    <span>Descargar Reporte (.docx)</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
