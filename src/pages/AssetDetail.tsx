@@ -1,59 +1,56 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAssetStore } from '../store/assetStore';
+import { useAuthStore } from '../store/authStore';
 import { SectionCard } from '../components/SectionCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { QRBadge } from '../components/QRBadge';
 import { AssetImage } from '../components/AssetImage';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/currency';
+import { formatDateLong } from '../utils/assets';
 import { HiOutlineArrowLeft, HiOutlinePencilSquare } from 'react-icons/hi2';
 
 export const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { selectedAsset, isLoading, error, fetchAssetById } = useAssetStore();
+  const { user } = useAuthStore();
+  const isGuest = user?.role === 'guest';
 
   useEffect(() => {
     if (id) {
       fetchAssetById(id);
     }
-  }, [id]);
+  }, [id, fetchAssetById]);
 
-  if (isLoading && !selectedAsset) {
+  if (isLoading) {
     return (
       <div className="py-20">
-        <LoadingSpinner label="Cargando ficha técnica del activo..." />
+        <LoadingSpinner label="Cargando ficha técnica del activo fijo..." />
       </div>
     );
   }
 
   if (error || !selectedAsset) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-        <h2 className="text-xl font-bold text-slate-800">Activo no encontrado</h2>
-        <p className="text-xs text-slate-500">{error || `El activo con ID "${id}" no está registrado.`}</p>
+      <div className="p-6 bg-rose-50 border border-rose-200 rounded-2xl text-center space-y-4">
+        <p className="text-sm font-bold text-rose-700">
+          {error || 'No se encontró la información del activo solicitado.'}
+        </p>
         <button
           type="button"
-          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-xl text-xs transition-all"
           onClick={() => navigate('/activos')}
+          className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-slate-700 transition-colors"
         >
-          Volver al listado
+          Volver al Catálogo
         </button>
       </div>
     );
   }
 
   const asset = selectedAsset;
-
-  const formattedDate = asset.purchaseDate
-    ? new Date(asset.purchaseDate).toLocaleDateString('es-BO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'UTC',
-    })
-    : 'No especificada';
+  const formattedDate = formatDateLong(asset.purchaseDate);
 
   return (
     <div className="space-y-6">
@@ -77,16 +74,18 @@ export const AssetDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-xl shadow-xs transition-all text-xs shrink-0"
-            onClick={() => navigate(`/activos/${asset.id}/editar`)}
-          >
-            <HiOutlinePencilSquare className="text-base" />
-            <span>Editar Activo</span>
-          </button>
-        </div>
+        {!isGuest && (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-xl shadow-xs transition-all text-xs shrink-0"
+              onClick={() => navigate(`/activos/${asset.id}/editar`)}
+            >
+              <HiOutlinePencilSquare className="text-base" />
+              <span>Editar Activo</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

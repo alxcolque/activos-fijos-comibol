@@ -15,8 +15,7 @@ import {
   HiOutlineCheckCircle,
   HiOutlineMapPin,
   HiOutlineFolder,
-  /* HiOutlineDocumentChartBar,
-  HiOutlineCog6Tooth, */
+  HiOutlineUsers,
   HiXMark,
   HiUser
 } from 'react-icons/hi2';
@@ -40,19 +39,20 @@ export const MainLayout: React.FC = () => {
     setMobileDrawerOpen(false);
   }, [location.pathname]);
 
+  const role = user?.role || 'admin';
+
   const menuItems = [
-    { name: 'Panel', path: '/', icon: HiOutlineSquares2X2 },
-    { name: 'Activos', path: '/activos', icon: HiOutlineBriefcase },
-    { name: 'Proyectos', path: '/proyectos', icon: HiOutlineFolder },
-    { name: 'Categorías', path: '/categorias', icon: HiOutlineTag },
-    { name: 'Estados', path: '/estados', icon: HiOutlineCheckCircle },
-    { name: 'Ubicaciones', path: '/ubicaciones', icon: HiOutlineMapPin },
-    /* { name: 'Reportes', path: '/reportes', icon: HiOutlineDocumentChartBar }, */
-    /*  { name: 'Ajustes', path: '/configuracion', icon: HiOutlineCog6Tooth }, */
-  ];
+    { name: 'Panel', path: '/', icon: HiOutlineSquares2X2, roles: ['admin', 'operador', 'guest'] },
+    { name: 'Activos', path: '/activos', icon: HiOutlineBriefcase, roles: ['admin', 'operador', 'guest'] },
+    { name: 'Proyectos', path: '/proyectos', icon: HiOutlineFolder, roles: ['admin', 'operador', 'guest'] },
+    { name: 'Categorías', path: '/categorias', icon: HiOutlineTag, roles: ['admin', 'operador'] },
+    { name: 'Estados', path: '/estados', icon: HiOutlineCheckCircle, roles: ['admin', 'operador'] },
+    { name: 'Ubicaciones', path: '/ubicaciones', icon: HiOutlineMapPin, roles: ['admin', 'operador'] },
+    { name: 'Usuarios', path: '/usuarios', icon: HiOutlineUsers, roles: ['admin'] },
+  ].filter((item) => item.roles.includes(role));
 
   const userName = user?.fullName || user?.name || 'Administrador';
-  const userRole = user?.role || 'Administrador COMIBOL';
+  const userRole = role === 'admin' ? 'Administrador' : role === 'operador' ? 'Operador' : 'Invitado (Lectura)';
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800 antialiased relative">

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios.instance';
 import type { Project } from '../interfaces/project.interface';
 import type { AssetModel } from '../interfaces/asset.interface';
+import { useAuthStore } from '../store/authStore';
+import { formatDate } from '../utils/assets';
 import { ProjectStatusBadge } from '../components/projects/ProjectStatusBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -46,6 +48,8 @@ interface AssetAssignmentItem {
 export const ProjectShowPage: React.FC = () => {
   const { id: projectId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const isGuest = user?.role === 'guest';
 
   // Estados del Proyecto
   const [project, setProject] = useState<Project | null>(null);
@@ -348,21 +352,7 @@ export const ProjectShowPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateVal?: string | Date | null) => {
-    if (!dateVal) return '—';
-    try {
-      const d = new Date(dateVal);
-      if (isNaN(d.getTime())) return '—';
-      return d.toLocaleDateString('es-BO', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        timeZone: 'UTC',
-      });
-    } catch {
-      return '—';
-    }
-  };
+  // Utiliza formatDate de ../utils/assets para zona horaria América/La_Paz
 
   const filteredAssets = assetsCatalog.filter((a) => {
     const q = searchAsset.toLowerCase();
@@ -437,13 +427,15 @@ export const ProjectShowPage: React.FC = () => {
             <span>Reporte Word</span>
           </button>
 
-          <button
-            onClick={handleOpenAssignModal}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all shrink-0"
-          >
-            <HiOutlinePlus className="text-base" />
-            <span>Asignar activo</span>
-          </button>
+          {!isGuest && (
+            <button
+              onClick={handleOpenAssignModal}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all shrink-0"
+            >
+              <HiOutlinePlus className="text-base" />
+              <span>Asignar activo</span>
+            </button>
+          )}
 
           <button
             onClick={() => {
@@ -598,8 +590,8 @@ export const ProjectShowPage: React.FC = () => {
                         {item.observations || 'Sin observaciones'}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {!isReleased && (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!isGuest && !isReleased && (
                             <button
                               type="button"
                               onClick={() => handleOpenReleaseModal(item)}
@@ -611,14 +603,16 @@ export const ProjectShowPage: React.FC = () => {
                             </button>
                           )}
 
-                          <button
-                            type="button"
-                            onClick={() => setDeleteItem(item)}
-                            title="Eliminar asignación"
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          >
-                            <HiOutlineTrash className="text-base" />
-                          </button>
+                          {!isGuest && (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteItem(item)}
+                              title="Eliminar asignación"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            >
+                              <HiOutlineTrash className="text-base" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

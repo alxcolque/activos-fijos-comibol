@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../store/projectStore';
+import { useAuthStore } from '../store/authStore';
 import type { Project, CreateProjectDTO, ProjectStatus } from '../interfaces/project.interface';
 import { ProjectFormModal } from '../components/projects/ProjectFormModal';
 import { ProjectStatusBadge } from '../components/projects/ProjectStatusBadge';
@@ -9,6 +10,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmptyState } from '../components/EmptyState';
 import { SearchBar } from '../components/SearchBar';
 import { Pagination } from '../components/Pagination';
+import { formatDate } from '../utils/assets';
 import {
   HiPlus,
   HiPencilSquare,
@@ -20,6 +22,8 @@ import {
 
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const isGuest = user?.role === 'guest';
   const { projects, pagination, isLoading, error, fetchProjects, createProject, updateProject, deleteProject } =
     useProjectStore();
 
@@ -90,12 +94,8 @@ export const ProjectsPage: React.FC = () => {
 
   const formatDateRange = (startDate?: string | null, endDate?: string | null) => {
     if (!startDate && !endDate) return '—';
-    const startStr = startDate
-      ? new Date(startDate).toLocaleDateString('es-BO', { timeZone: 'UTC' })
-      : 'Indefinido';
-    const endStr = endDate
-      ? new Date(endDate).toLocaleDateString('es-BO', { timeZone: 'UTC' })
-      : 'Presente';
+    const startStr = startDate ? formatDate(startDate) : 'Indefinido';
+    const endStr = endDate ? formatDate(endDate) : 'Presente';
     return `${startStr} - ${endStr}`;
   };
 
@@ -123,14 +123,16 @@ export const ProjectsPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenCreate}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all shrink-0"
-        >
-          <HiPlus className="text-base" />
-          <span>Nuevo Proyecto</span>
-        </button>
+        {!isGuest && (
+          <button
+            type="button"
+            onClick={handleOpenCreate}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all shrink-0"
+          >
+            <HiPlus className="text-base" />
+            <span>Nuevo Proyecto</span>
+          </button>
+        )}
       </div>
 
       {/* Barra de Filtros y Búsqueda */}
@@ -258,23 +260,27 @@ export const ProjectsPage: React.FC = () => {
                           <HiEye className="text-base" />
                         </button>
                         {/* Editar */}
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(pry)}
-                          title="Editar información general"
-                          className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        >
-                          <HiPencilSquare className="text-base" />
-                        </button>
+                        {!isGuest && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(pry)}
+                            title="Editar información general"
+                            className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          >
+                            <HiPencilSquare className="text-base" />
+                          </button>
+                        )}
                         {/* Eliminar */}
-                        <button
-                          type="button"
-                          onClick={() => setProjectToDelete(pry)}
-                          title="Eliminar proyecto"
-                          className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        >
-                          <HiTrash className="text-base" />
-                        </button>
+                        {!isGuest && (
+                          <button
+                            type="button"
+                            onClick={() => setProjectToDelete(pry)}
+                            title="Eliminar proyecto"
+                            className="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          >
+                            <HiTrash className="text-base" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

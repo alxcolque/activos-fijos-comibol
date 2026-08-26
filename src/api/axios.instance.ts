@@ -5,24 +5,20 @@ const getApiBaseURL = () => {
   const envBase = import.meta.env.VITE_API_BASE_URL;
   if (envBase) {
     const clean = envBase.replace(/\/+$/, '');
-    if (clean.endsWith('/v1')) return clean;
-    return `${clean}/v1`;
+    if (clean.endsWith('/api')) return clean;
+    if (clean.endsWith('/api/v1')) return clean.replace(/\/v1$/, '');
+    return `${clean}/api`;
   }
 
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
     const serverUrl = envUrl.replace(/\/+$/, '');
-    if (serverUrl.endsWith('/api/v1')) return serverUrl;
-    if (serverUrl.endsWith('/api')) return `${serverUrl}/v1`;
-    return `${serverUrl}/api/v1`;
+    if (serverUrl.endsWith('/api')) return serverUrl;
+    if (serverUrl.endsWith('/api/v1')) return serverUrl.replace(/\/v1$/, '');
+    return `${serverUrl}/api`;
   }
 
-  console.error(
-    '[Config Error] No se encontró VITE_API_BASE_URL ni VITE_API_URL en el archivo .env. Verifique su configuración de variables de entorno.'
-  );
-  throw new Error(
-    'Error de configuración: VITE_API_BASE_URL / VITE_API_URL no está definida en las variables de entorno (.env).'
-  );
+  return 'http://localhost:3001/api';
 };
 
 const baseURL = getApiBaseURL();
@@ -63,7 +59,7 @@ api.interceptors.response.use(
       error.code === 'ERR_NETWORK' ||
       error.code === 'ERR_CONNECTION_REFUSED'
     ) {
-      error.customMessage = 'Servidor no disponible. Verifique que el backend (puerto 3000) esté en ejecución.';
+      error.customMessage = 'Servidor no disponible. Verifique que el backend esté en ejecución.';
     }
 
     return Promise.reject(error);

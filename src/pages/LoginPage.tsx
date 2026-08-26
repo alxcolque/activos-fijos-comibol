@@ -8,8 +8,8 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, isLoading, error } = useAuthStore();
 
-  const [email, setEmail] = useState('admin@comibol.gob.bo');
-  const [password, setPassword] = useState('comibol123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +68,7 @@ export const LoginPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@comibol.gob.bo"
+                placeholder="usuario@comibol.gob.bo"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
               />

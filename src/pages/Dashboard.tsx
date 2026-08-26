@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios.instance';
+import { formatDate } from '../utils/assets';
 import { PageTitle } from '../components/PageTitle';
 import { StatCard } from '../components/StatCard';
 import { SectionCard } from '../components/SectionCard';
@@ -257,7 +258,7 @@ export const Dashboard: React.FC = () => {
                         {act.description || `${act.action} en inventario`}
                       </p>
                       <span className="text-[10px] font-bold text-slate-400">
-                        {act.date ? new Date(act.date).toLocaleDateString('es-BO', { timeZone: 'UTC' }) : 'Reciente'}
+                        {act.date ? formatDate(act.date) : 'Reciente'}
                       </span>
                     </div>
                   </div>
@@ -379,9 +380,7 @@ export const Dashboard: React.FC = () => {
                       <td className="py-3.5 px-4 font-mono font-bold text-amber-700">{asset.code}</td>
                       <td className="py-3.5 px-4 font-bold text-slate-800">{asset.name}</td>
                       <td className="py-3.5 px-4 text-center text-slate-500 font-medium">
-                        {asset.createdAt
-                          ? new Date(asset.createdAt).toLocaleDateString('es-BO', { timeZone: 'UTC' })
-                          : '—'}
+                        {asset.createdAt ? formatDate(asset.createdAt) : '—'}
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <button

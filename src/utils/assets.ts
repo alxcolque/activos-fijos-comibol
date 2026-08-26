@@ -67,24 +67,85 @@ export const getAssetUrl = (path?: string): string => {
   return baseUrl.endsWith('/') ? `${baseUrl}${cleanPath}` : `${baseUrl}/${cleanPath}`;
 };
 
+export const getAppTimezone = (): string => {
+  return import.meta.env.VITE_TIMEZONE || import.meta.env.TZ || 'America/La_Paz';
+};
+
+/**
+ * Retorna la fecha actual en formato 'YYYY-MM-DD' ajustada a la zona horaria del sistema (America/La_Paz).
+ * Evita el salto de día que ocurre con toISOString() en horarios nocturnos (ej. 20:45 PM).
+ */
+export const getTodayDateString = (): string => {
+  const tz = getAppTimezone();
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(new Date());
+  } catch (e) {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+};
+
 export const formatDate = (dateStr?: string | Date | null): string => {
   if (!dateStr) return '—';
-  const str = typeof dateStr === 'string' ? dateStr : dateStr.toISOString();
-  const datePart = str.split('T')[0];
-  const parts = datePart.split('-');
-  if (parts.length === 3) {
-    const [year, month, day] = parts;
-    return `${day}/${month}/${year}`;
+
+  if (typeof dateStr === 'string') {
+    const datePart = dateStr.split('T')[0];
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return `${day}/${month}/${year}`;
+    }
   }
-  return new Date(dateStr).toLocaleDateString('es-BO', { timeZone: 'UTC' });
+
+  if (dateStr instanceof Date) {
+    const tz = getAppTimezone();
+    return dateStr.toLocaleDateString('es-BO', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  }
+
+  return String(dateStr);
 };
 
 export const formatDateLong = (dateStr?: string | Date | null): string => {
   if (!dateStr) return 'No especificada';
-  return new Date(dateStr).toLocaleDateString('es-BO', {
+
+  const monthNames = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+  ];
+
+  if (typeof dateStr === 'string') {
+    const datePart = dateStr.split('T')[0];
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      return `${day} de ${monthNames[monthIdx] || ''} de ${year}`;
+    }
+  }
+
+  const d = dateStr instanceof Date ? dateStr : new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+
+  const tz = getAppTimezone();
+  return d.toLocaleDateString('es-BO', {
+    timeZone: tz,
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-    timeZone: 'UTC',
   });
 };

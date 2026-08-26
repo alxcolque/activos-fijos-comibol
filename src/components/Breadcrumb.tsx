@@ -27,6 +27,9 @@ export const Breadcrumb: React.FC = () => {
       case 'ubicaciones':
       case 'locations':
         return 'Ubicaciones';
+      case 'usuarios':
+      case 'users':
+        return 'Usuarios';
       case 'reportes':
       case 'reports':
         return 'Reportes';

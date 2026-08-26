@@ -12,6 +12,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { SearchBar } from '../components/SearchBar';
 import { Pagination } from '../components/Pagination';
 import { formatCurrency } from '../utils/currency';
+import { getTodayDateString, formatDate } from '../utils/assets';
 import api from '../api/axios.instance';
 import {
   HiOutlineEye,
@@ -51,9 +52,7 @@ export const AssetsList: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
   // Excel Report Download & Depreciation calculation date
-  const [calculationDate, setCalculationDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [calculationDate, setCalculationDate] = useState<string>(getTodayDateString());
   const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
 
   const handleDownloadExcelReport = async () => {
@@ -117,7 +116,7 @@ export const AssetsList: React.FC = () => {
     setSelectedCategory('');
     setSelectedStatus('');
     setSelectedLocation('');
-    setCalculationDate(new Date().toISOString().split('T')[0]);
+    setCalculationDate(getTodayDateString());
   };
 
   const handleDeleteRequest = (asset: AssetModel, e: React.MouseEvent) => {
@@ -136,22 +135,6 @@ export const AssetsList: React.FC = () => {
       showNotification('danger', err.message || 'No se pudo eliminar el activo.');
       setAssetToDelete(null);
     }
-  };
-
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return '—';
-    const datePart = dateStr.split('T')[0];
-    const parts = datePart.split('-');
-    if (parts.length === 3) {
-      const [year, month, day] = parts;
-      return `${day}/${month}/${year}`;
-    }
-    return new Date(dateStr).toLocaleDateString('es-BO', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      timeZone: 'UTC',
-    });
   };
 
   return (

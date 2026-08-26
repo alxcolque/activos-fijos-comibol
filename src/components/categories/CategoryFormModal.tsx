@@ -19,18 +19,18 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [usefulLife, setUsefulLife] = useState<number>(5);
+  const [usefulLife, setUsefulLife] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (category) {
       setName(category.name || '');
       setDescription(category.description || '');
-      setUsefulLife(category.usefulLife ?? 5);
+      setUsefulLife(category.usefulLife ?? 0);
     } else {
       setName('');
       setDescription('');
-      setUsefulLife(5);
+      setUsefulLife(0);
     }
     setError(null);
   }, [category, isOpen]);
@@ -46,8 +46,8 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       return;
     }
 
-    if (usefulLife <= 0) {
-      setError('La vida útil debe ser mayor a 0 años.');
+    if (usefulLife < 0) {
+      setError('La vida útil debe ser mayor o igual a 0 años.');
       return;
     }
 
@@ -110,9 +110,9 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
               type="number"
               value={usefulLife}
               onChange={(e) => setUsefulLife(Number(e.target.value))}
-              placeholder="EJ: 5"
+              placeholder="EJ: 0"
               required
-              min={1}
+              min={0}
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
             />
           </div>
