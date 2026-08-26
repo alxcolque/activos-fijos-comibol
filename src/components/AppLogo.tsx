@@ -9,9 +9,9 @@ interface AppLogoProps {
 export const AppLogo: React.FC<AppLogoProps> = ({ collapsed, isDark = false }) => {
   return (
     <div className="flex items-center gap-3 px-2 py-1 select-none">
-      <img 
-        src={getAssetUrl('logo.png')} 
-        alt="COMIBOL Logo" 
+      <img
+        src={getAssetUrl('logo.png')}
+        alt="COMIBOL Logo"
         className="w-10 h-10 object-contain shrink-0"
       />
       {!collapsed && (

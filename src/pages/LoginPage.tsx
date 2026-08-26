@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { AppLogo } from '../components/AppLogo';
+import { getAssetUrl } from '../utils/assets';
 import { HiOutlineEnvelope, HiOutlineLockClosed, HiArrowRight } from 'react-icons/hi2';
 
 export const LoginPage: React.FC = () => {
@@ -37,14 +37,24 @@ export const LoginPage: React.FC = () => {
 
       <div className="w-full max-w-md bg-slate-800/90 border border-slate-700/80 rounded-3xl shadow-2xl p-8 relative z-10 backdrop-blur-md">
         {/* Encabezado e Isotipo COMIBOL */}
-        <div className="flex flex-col items-center text-center mb-8">
-          <div className="mb-4">
-            <AppLogo isDark={true} />
+        <div className="flex flex-col items-center text-center mb-2">
+          <div className="flex flex-col items-center">
+            <img
+              src={getAssetUrl('logo.png')}
+              alt="COMIBOL Logo"
+              className="w-24 h-24 object-contain shrink-0"
+            />
+            <span className={`text-sm font-bold text-amber-500 tracking-wider uppercase`}>
+              COMIBOL
+            </span>
+            <span className={`text-sm font-bold text-white tracking-wider uppercase`}>
+              DIRECCIÓN DE PROYECTOS Y GEOLOGÍA
+            </span>
+            <span className={`text-xs text-slate-300 font-semibold`}>
+              Activos Fijos
+            </span>
           </div>
           <h1 className="text-xl font-bold text-white tracking-tight">Acceso al Sistema</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Gestión Patrimonial de Activos Fijos COMIBOL
-          </p>
         </div>
 
         {/* Banner de Error */}
@@ -58,7 +68,7 @@ export const LoginPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-bold text-slate-300 mb-2">
-              Correo Electrónico Institucional
+              Correo Electrónico
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
