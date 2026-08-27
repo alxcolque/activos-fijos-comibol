@@ -11,6 +11,7 @@ import {
   HiOutlineMapPin,
   HiOutlineFolder,
   HiOutlineUsers,
+  HiOutlineCube,
   HiUser
 } from 'react-icons/hi2';
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
@@ -25,6 +26,7 @@ export const Sidebar: React.FC = () => {
   const menuItems = [
     { name: 'Panel', path: '/', icon: HiOutlineSquares2X2, roles: ['admin', 'operador', 'guest'] },
     { name: 'Activos', path: '/activos', icon: HiOutlineBriefcase, roles: ['admin', 'operador', 'guest'] },
+    { name: 'Suministros', path: '/suministros', icon: HiOutlineCube, roles: ['admin', 'operador', 'guest'] },
     { name: 'Proyectos', path: '/proyectos', icon: HiOutlineFolder, roles: ['admin', 'operador', 'guest'] },
     { name: 'Categorías', path: '/categorias', icon: HiOutlineTag, roles: ['admin', 'operador'] },
     { name: 'Estados', path: '/estados', icon: HiOutlineCheckCircle, roles: ['admin', 'operador'] },

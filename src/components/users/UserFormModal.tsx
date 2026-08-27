@@ -19,6 +19,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 }) => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [profession, setProfession] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('admin');
   const [isActive, setIsActive] = useState(true);
@@ -28,12 +29,14 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     if (user) {
       setFullName(user.fullName || '');
       setEmail(user.email || '');
+      setProfession(user.profession || '');
       setPassword('');
       setRole(user.role || 'admin');
       setIsActive(user.isActive ?? true);
     } else {
       setFullName('');
       setEmail('');
+      setProfession('');
       setPassword('');
       setRole('admin');
       setIsActive(true);
@@ -72,6 +75,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         const updateData: UpdateUserDTO = {
           fullName: fullName.trim(),
           email: email.trim(),
+          profession: profession.trim() || null,
           role,
           isActive,
         };
@@ -83,6 +87,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         await onSubmit({
           fullName: fullName.trim(),
           email: email.trim(),
+          profession: profession.trim() || null,
           password: password.trim(),
           role,
           isActive,
@@ -129,6 +134,19 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Ej: Ing. Paula Alarcón"
               required
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Profesión / Cargo
+            </label>
+            <input
+              type="text"
+              value={profession}
+              onChange={(e) => setProfession(e.target.value)}
+              placeholder="Ej: Ingeniero de Minas, Contador Auditor, etc."
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
             />
           </div>

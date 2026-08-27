@@ -4,6 +4,7 @@ export interface UserItem {
   id: string;
   email: string;
   fullName: string;
+  profession?: string | null;
   role: UserRole;
   isActive: boolean;
   lastLogin?: string | null;
@@ -14,6 +15,7 @@ export interface UserItem {
 export interface CreateUserDTO {
   fullName: string;
   email: string;
+  profession?: string | null;
   password: string;
   role?: UserRole;
   isActive?: boolean;
@@ -22,6 +24,7 @@ export interface CreateUserDTO {
 export interface UpdateUserDTO {
   fullName?: string;
   email?: string;
+  profession?: string | null;
   password?: string;
   role?: UserRole;
   isActive?: boolean;
