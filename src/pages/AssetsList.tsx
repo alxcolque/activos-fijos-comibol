@@ -22,8 +22,30 @@ import {
   HiOutlineListBullet,
   HiOutlineArrowPath,
   HiOutlineArrowDownTray,
+  HiOutlineAdjustmentsHorizontal,
   HiPlus,
 } from 'react-icons/hi2';
+
+interface ColumnDef {
+  key: string;
+  label: string;
+}
+
+const ALL_COLUMNS: ColumnDef[] = [
+  { key: 'code', label: 'Código' },
+  { key: 'qrCode', label: 'Código QR' },
+  { key: 'name', label: 'Nombre del Activo' },
+  { key: 'quantity', label: 'Cantidad' },
+  { key: 'quantityOut', label: 'Salidas' },
+  { key: 'available', label: 'Disponibles' },
+  { key: 'unit', label: 'Unidad' },
+  { key: 'status', label: 'Estado' },
+  { key: 'purchaseDate', label: 'Fecha Adquisición' },
+  { key: 'purchaseValue', label: 'Valor Original' },
+  { key: 'dep', label: 'Depreciación (%)' },
+  { key: 'depac', label: 'Dep. Acumulada' },
+  { key: 'balance', label: 'Saldo / Valor Neto' },
+];
 
 export const AssetsList: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +68,34 @@ export const AssetsList: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
+  // Column visibility state
+  const [columnMenuOpen, setColumnMenuOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    code: true,
+    qrCode: true,
+    name: true,
+    quantity: true,
+    quantityOut: true,
+    available: true,
+    unit: true,
+    status: true,
+    purchaseDate: true,
+    purchaseValue: true,
+    dep: true,
+    depac: true,
+    balance: true,
+  });
+
+  const toggleColumn = (key: string) => {
+    setVisibleColumns((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const showAllColumns = () => {
+    const reset: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach((col) => (reset[col.key] = true));
+    setVisibleColumns(reset);
+  };
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState<AssetModel | null>(null);
@@ -222,7 +272,7 @@ export const AssetsList: React.FC = () => {
         </div>
 
         {/* Bar de Acciones y Cambio de Vista */}
-        <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 pt-3 gap-3">
           <div className="flex items-center gap-3">
             {(search || selectedCategory || selectedStatus || selectedLocation) && (
               <button
@@ -239,13 +289,13 @@ export const AssetsList: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
             {/* Selector de Fecha para Cálculo de Depreciación */}
             <div
               className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl shadow-2xs text-xs"
-              title="Calcular depreciación al: "
+              title="Calcular depreciación al:"
             >
-              <span className="font-bold text-slate-600 whitespace-nowrap">Calcular depreciación al:</span>
+              <span className="font-bold text-slate-600 whitespace-nowrap">Depreciación al:</span>
               <input
                 type="date"
                 value={calculationDate}
@@ -253,11 +303,62 @@ export const AssetsList: React.FC = () => {
                   setCalculationDate(e.target.value);
                   setCurrentPage(1);
                 }}
-                title="Calcular depreciación al: "
                 className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs"
               />
             </div>
 
+            {/* Menú de Configuración de Columnas */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setColumnMenuOpen(!columnMenuOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-2xs transition-all shrink-0"
+                title="Mostrar u ocultar columnas de la tabla"
+              >
+                <HiOutlineAdjustmentsHorizontal className="text-base text-slate-600" />
+                <span>Columnas</span>
+              </button>
+
+              {columnMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setColumnMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl z-40 p-3 text-xs space-y-2 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <span className="font-bold text-slate-800">Columnas Visibles</span>
+                      <button
+                        type="button"
+                        onClick={showAllColumns}
+                        className="text-[11px] font-bold text-amber-600 hover:underline"
+                      >
+                        Mostrar Todas
+                      </button>
+                    </div>
+
+                    <div className="max-h-60 overflow-y-auto space-y-1 pr-1">
+                      {ALL_COLUMNS.map((col) => (
+                        <label
+                          key={col.key}
+                          className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-slate-700 font-medium select-none"
+                        >
+                          <span>{col.label}</span>
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns[col.key] ?? true}
+                            onChange={() => toggleColumn(col.key)}
+                            className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Descargar Reporte Excel */}
             <button
               type="button"
               onClick={handleDownloadExcelReport}
@@ -266,14 +367,15 @@ export const AssetsList: React.FC = () => {
               className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-2xs transition-all shrink-0 border border-emerald-800 disabled:opacity-50"
             >
               <HiOutlineArrowDownTray className="text-sm text-emerald-200" />
-              <span>{isDownloadingExcel ? 'Generando Excel...' : 'Reporte Excel'}</span>
+              <span>{isDownloadingExcel ? 'Excel...' : 'Reporte Excel'}</span>
             </button>
 
-            {/* Selector de Vista */}
+            {/* Selector de Vista (Tabla / Tarjetas) */}
             <div className="flex items-center border border-slate-200 rounded-xl p-1 bg-slate-50">
               <button
                 type="button"
                 onClick={() => setViewMode('table')}
+                title="Vista de Tabla"
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'table' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                   }`}
               >
@@ -282,6 +384,7 @@ export const AssetsList: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setViewMode('cards')}
+                title="Vista de Tarjetas"
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'cards' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                   }`}
               >
@@ -310,32 +413,101 @@ export const AssetsList: React.FC = () => {
         />
       ) : viewMode === 'table' ? (
         <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Scrollable Container with sticky actions column */}
+          <div className="overflow-x-auto max-w-full">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                   <th className="px-4 py-3.5 w-12 text-center">N°</th>
-                  <th className="px-4 py-3.5 text-right">Acciones</th>
-                  <th className="px-4 py-3.5">Código</th>
-                  <th className="px-4 py-3.5 text-center">QR</th>
-                  <th className="px-4 py-3.5 text-center">Cant.</th>
-                  <th className="px-4 py-3.5 text-center">Salidas</th>
-                  <th className="px-4 py-3.5 text-center">Disponibles</th>
-                  <th className="px-4 py-3.5 text-center">Unidad</th>
-                  <th className="px-4 py-3.5">Nombre del Activo</th>
-                  <th className="px-4 py-3.5 text-center">Estado</th>
-                  <th className="px-4 py-3.5 text-center">Fecha Adquisición</th>
-                  <th className="px-4 py-3.5 text-right">Valor Original</th>
-                  <th className="px-4 py-3.5 text-right">Depreciación</th>
-                  <th className="px-4 py-3.5 text-right">Dep. Acumulada</th>
-                  <th className="px-4 py-3.5 text-right">Saldo</th>
+                  {visibleColumns.code && <th className="px-4 py-3.5">Código</th>}
+                  {visibleColumns.qrCode && <th className="px-4 py-3.5 text-center">QR</th>}
+                  {visibleColumns.name && <th className="px-4 py-3.5">Nombre del Activo</th>}
+                  {visibleColumns.quantity && <th className="px-4 py-3.5 text-center">Cant.</th>}
+                  {visibleColumns.quantityOut && <th className="px-4 py-3.5 text-center">Salidas</th>}
+                  {visibleColumns.available && <th className="px-4 py-3.5 text-center">Disponibles</th>}
+                  {visibleColumns.unit && <th className="px-4 py-3.5 text-center">Unidad</th>}
+                  {visibleColumns.status && <th className="px-4 py-3.5 text-center">Estado</th>}
+                  {visibleColumns.purchaseDate && <th className="px-4 py-3.5 text-center">Fecha Adquisición</th>}
+                  {visibleColumns.purchaseValue && <th className="px-4 py-3.5 text-right">Valor Original</th>}
+                  {visibleColumns.dep && <th className="px-4 py-3.5 text-right">Depreciación</th>}
+                  {visibleColumns.depac && <th className="px-4 py-3.5 text-right">Dep. Acumulada</th>}
+                  {visibleColumns.balance && <th className="px-4 py-3.5 text-right">Saldo</th>}
+                  {/* Sticky Actions Header */}
+                  <th className="px-4 py-3.5 text-right sticky right-0 z-20 bg-slate-100/95 backdrop-blur-xs shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.06)] border-l border-slate-200/80">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
                 {assets.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                  <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors">
                     <td className="px-4 py-4 text-center font-bold text-slate-400">{index + 1}</td>
-                    <td className="px-4 py-4 text-right">
+                    {visibleColumns.code && (
+                      <td className="px-4 py-4 font-mono font-bold text-amber-600">{item.code}</td>
+                    )}
+                    {visibleColumns.qrCode && (
+                      <td className="px-4 py-4 text-center">
+                        <QRBadge value={item.qrCode || item.code} size={36} />
+                      </td>
+                    )}
+                    {visibleColumns.name && (
+                      <td className="px-4 py-4 font-bold text-slate-800">
+                        <div className="flex flex-col">
+                          <span>{item.name}</span>
+                          {(item.brand || item.model) && (
+                            <span className="text-[11px] font-normal text-slate-400">
+                              {item.brand} {item.model ? `- ${item.model}` : ''}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                    {visibleColumns.quantity && (
+                      <td className="px-4 py-4 text-center font-bold text-slate-700">{item.quantity}</td>
+                    )}
+                    {visibleColumns.quantityOut && (
+                      <td className="px-4 py-4 text-center font-bold text-rose-600">{item.quantityOut || 0}</td>
+                    )}
+                    {visibleColumns.available && (
+                      <td className="px-4 py-4 text-center font-bold text-emerald-600">
+                        {Math.max(0, item.quantity - (item.quantityOut || 0))}
+                      </td>
+                    )}
+                    {visibleColumns.unit && (
+                      <td className="px-4 py-4 text-center font-semibold text-slate-500">{item.unit || 'PZA'}</td>
+                    )}
+                    {visibleColumns.status && (
+                      <td className="px-4 py-4 text-center">
+                        <StatusBadge status={item.status?.name || 'Desconocido'} />
+                      </td>
+                    )}
+                    {visibleColumns.purchaseDate && (
+                      <td className="px-4 py-4 text-center text-slate-600 font-medium">
+                        {formatDate(item.purchaseDate)}
+                      </td>
+                    )}
+                    {visibleColumns.purchaseValue && (
+                      <td className="px-4 py-4 text-right font-bold text-slate-800">
+                        {formatCurrency(item.purchaseValue)}
+                      </td>
+                    )}
+                    {visibleColumns.dep && (
+                      <td className="px-4 py-4 text-right font-semibold text-slate-600">
+                        {item.dep != null ? `${item.dep}%` : '—'}
+                      </td>
+                    )}
+                    {visibleColumns.depac && (
+                      <td className="px-4 py-4 text-right font-semibold text-amber-700">
+                        {formatCurrency(item.depac)}
+                      </td>
+                    )}
+                    {visibleColumns.balance && (
+                      <td className="px-4 py-4 text-right font-bold text-emerald-700">
+                        {formatCurrency(item.balance)}
+                      </td>
+                    )}
+                    {/* Sticky Actions Cell */}
+                    <td className="px-4 py-4 text-right sticky right-0 z-10 bg-white group-hover:bg-slate-50/90 backdrop-blur-xs shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.06)] border-l border-slate-200/80">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
@@ -363,44 +535,6 @@ export const AssetsList: React.FC = () => {
                         </button>
                       </div>
                     </td>
-                    <td className="px-4 py-4 font-mono font-bold text-amber-600">{item.code}</td>
-                    <td className="px-4 py-4 text-center">
-                      <QRBadge value={item.qrCode || item.code} size={36} />
-                    </td>
-                    <td className="px-4 py-4 text-center font-bold text-slate-700">{item.quantity}</td>
-                    <td className="px-4 py-4 text-center font-bold text-rose-600">{item.quantityOut || 0}</td>
-                    <td className="px-4 py-4 text-center font-bold text-emerald-600">
-                      {Math.max(0, item.quantity - (item.quantityOut || 0))}
-                    </td>
-                    <td className="px-4 py-4 text-center font-semibold text-slate-500">{item.unit || 'PZA'}</td>
-                    <td className="px-4 py-4 font-bold text-slate-800">
-                      <div className="flex flex-col">
-                        <span>{item.name}</span>
-                        {(item.brand || item.model) && (
-                          <span className="text-[11px] font-normal text-slate-400">
-                            {item.brand} {item.model ? `- ${item.model}` : ''}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <StatusBadge status={item.status?.name || 'Desconocido'} />
-                    </td>
-                    <td className="px-4 py-4 text-center text-slate-600 font-medium">
-                      {formatDate(item.purchaseDate)}
-                    </td>
-                    <td className="px-4 py-4 text-right font-bold text-slate-800">
-                      {formatCurrency(item.purchaseValue)}
-                    </td>
-                    <td className="px-4 py-4 text-right font-semibold text-slate-600">
-                      {item.dep != null ? `${item.dep}%` : '—'}
-                    </td>
-                    <td className="px-4 py-4 text-right font-semibold text-amber-700">
-                      {formatCurrency(item.depac)}
-                    </td>
-                    <td className="px-4 py-4 text-right font-bold text-emerald-700">
-                      {formatCurrency(item.balance)}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -410,7 +544,14 @@ export const AssetsList: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {assets.map((asset) => (
-            <AssetCard key={asset.id} asset={asset as any} />
+            <AssetCard
+              key={asset.id}
+              asset={asset as any}
+              onDelete={(a) => {
+                setAssetToDelete(a);
+                setDeleteConfirmOpen(true);
+              }}
+            />
           ))}
         </div>
       )}

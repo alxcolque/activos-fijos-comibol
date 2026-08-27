@@ -86,7 +86,6 @@ export const ProjectShowPage: React.FC = () => {
   // Modal "Reporte Word"
   const [isWordModalOpen, setIsWordModalOpen] = useState(false);
   const [pageSize, setPageSize] = useState<'carta' | 'a4' | 'oficio'>('carta');
-  const [orientation, setOrientation] = useState<'vertical' | 'horizontal'>('horizontal');
   const [isDownloadingWord, setIsDownloadingWord] = useState(false);
 
   // Notificaciones Toast
@@ -391,11 +390,10 @@ export const ProjectShowPage: React.FC = () => {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-5 right-5 z-[99999] p-4 rounded-2xl shadow-2xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
-          }`}
+          className={`fixed top-5 right-5 z-[99999] p-4 rounded-2xl shadow-2xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${toastMessage.type === 'success'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : 'bg-rose-50 border-rose-200 text-rose-800'
+            }`}
         >
           {toastMessage.text}
         </div>
@@ -719,11 +717,10 @@ export const ProjectShowPage: React.FC = () => {
 
               {selectedAsset && selectedAssetStock && (
                 <div
-                  className={`p-3 rounded-2xl text-xs font-semibold flex items-center justify-between border ${
-                    selectedAssetStock.isOutOfStock
-                      ? 'bg-rose-50 border-rose-200 text-rose-700'
-                      : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                  }`}
+                  className={`p-3 rounded-2xl text-xs font-semibold flex items-center justify-between border ${selectedAssetStock.isOutOfStock
+                    ? 'bg-rose-50 border-rose-200 text-rose-700'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     {selectedAssetStock.isOutOfStock ? (
@@ -882,11 +879,10 @@ export const ProjectShowPage: React.FC = () => {
         isOpen={!!deleteItem}
         onOpenChange={(open) => !open && setDeleteItem(null)}
         title="¿Eliminar Asignación?"
-        message={`¿Está seguro de eliminar físicamente el registro de asignación de "${deleteItem?.asset?.name}" (${deleteItem?.quantity} unidades)? ${
-          !deleteItem?.releasedAt
-            ? 'Las unidades se devolverán automáticamente al stock disponible en el almacén de activos.'
-            : ''
-        }`}
+        message={`¿Está seguro de eliminar físicamente el registro de asignación de "${deleteItem?.asset?.name}" (${deleteItem?.quantity} unidades)? ${!deleteItem?.releasedAt
+          ? 'Las unidades se devolverán automáticamente al stock disponible en el almacén de activos.'
+          : ''
+          }`}
         confirmText={isDeleting ? 'Eliminando...' : 'Sí, Eliminar Registro'}
         color="danger"
         onConfirm={handleConfirmDelete}
@@ -927,11 +923,10 @@ export const ProjectShowPage: React.FC = () => {
                       key={item.id}
                       type="button"
                       onClick={() => setPageSize(item.id as any)}
-                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
-                        pageSize === item.id
-                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
-                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
-                      }`}
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${pageSize === item.id
+                        ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
+                        : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
+                        }`}
                     >
                       <span className="capitalize">{item.label}</span>
                       <span className="text-[10px] text-slate-400 font-normal">{item.sub}</span>
@@ -939,32 +934,6 @@ export const ProjectShowPage: React.FC = () => {
                   ))}
                 </div>
               </div>
-
-              {/* Orientación */}
-              <div className="space-y-1.5">
-                <label className="block text-slate-700 font-bold">Orientación de Página</label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {[
-                    { id: 'vertical', label: 'Vertical', desc: 'Retrato' },
-                    { id: 'horizontal', label: 'Horizontal', desc: 'Apaisado' },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setOrientation(item.id as any)}
-                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
-                        orientation === item.id
-                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
-                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      <span className="text-[10px] text-slate-400 font-normal">({item.desc})</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] text-amber-900 font-medium leading-relaxed">
                 ℹ️ El documento se generará con margen <strong>Estrecho</strong> e incluirá el logo institucional de COMIBOL y la tabla de activos asignados.
               </div>
