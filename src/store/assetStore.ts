@@ -73,7 +73,7 @@ export const useAssetStore = create<AssetState>((set, get) => ({
   fetchInitialData: async () => {
     try {
       const [catRes, statRes, locRes] = await Promise.all([
-        api.get<{ success: boolean; data: AssetCategory[] }>('/categories'),
+        api.get<{ success: boolean; data: AssetCategory[] }>('/categories?type=ASSET'),
         api.get<{ success: boolean; data: AssetStatus[] }>('/statuses'),
         api.get<{ success: boolean; data: LocationNode[] }>('/locations?limit=200'),
       ]);

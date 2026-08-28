@@ -1,7 +1,10 @@
+export type CategoryType = 'ASSET' | 'SUPPLY';
+
 export interface AssetCategory {
   id: string;
   name: string;
   description?: string | null;
+  type?: CategoryType;
   usefulLife?: number;
   createdAt: string;
   updatedAt: string;
@@ -13,6 +16,7 @@ export interface AssetCategory {
 export interface CreateCategoryDTO {
   name: string;
   description?: string;
+  type?: CategoryType;
   usefulLife?: number;
 }
 

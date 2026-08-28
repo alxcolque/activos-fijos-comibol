@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios.instance';
 import type { Project } from '../interfaces/project.interface';
 import type { AssetModel } from '../interfaces/asset.interface';
+import type { SupplyItem, SupplyProjectItem } from '../interfaces/supply.interface';
 import { useAuthStore } from '../store/authStore';
 import { formatDate } from '../utils/assets';
 import { ProjectStatusBadge } from '../components/projects/ProjectStatusBadge';
@@ -24,6 +25,7 @@ import {
   HiOutlineLockOpen,
   HiOutlineArrowDownTray,
   HiXMark,
+  HiOutlineBriefcase,
 } from 'react-icons/hi2';
 
 interface AssetAssignmentItem {
@@ -51,16 +53,17 @@ export const ProjectShowPage: React.FC = () => {
   const { user } = useAuthStore();
   const isGuest = user?.role === 'guest';
 
+  // Pestañas (Activos Fijos vs Suministros)
+  const [activeTab, setActiveTab] = useState<'ASSETS' | 'SUPPLIES'>('ASSETS');
+
   // Estados del Proyecto
   const [project, setProject] = useState<Project | null>(null);
   const [isLoadingProject, setIsLoadingProject] = useState(true);
   const [projectError, setProjectError] = useState<string | null>(null);
 
-  // Estados de Asignaciones del Proyecto
+  // Estados de Asignaciones de Activos Fijos
   const [assignments, setAssignments] = useState<AssetAssignmentItem[]>([]);
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
-
-  // Catálogo completo de Activos
   const [assetsCatalog, setAssetsCatalog] = useState<AssetModel[]>([]);
 
   // Modal "Asignar activo"
@@ -79,9 +82,33 @@ export const ProjectShowPage: React.FC = () => {
   const [isReleasing, setIsReleasing] = useState(false);
   const [releaseValidationWarning, setReleaseValidationWarning] = useState<string | null>(null);
 
-  // Modal "Eliminar asignación"
+  // Modal "Eliminar asignación de activo"
   const [deleteItem, setDeleteItem] = useState<AssetAssignmentItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Estados de Asignaciones de Suministros
+  const [supplyAssignments, setSupplyAssignments] = useState<SupplyProjectItem[]>([]);
+  const [isLoadingSupplyAssignments, setIsLoadingSupplyAssignments] = useState(false);
+  const [suppliesCatalog, setSuppliesCatalog] = useState<SupplyItem[]>([]);
+
+  // Modal "Asignar suministro"
+  const [isAssignSupplyModalOpen, setIsAssignSupplyModalOpen] = useState(false);
+  const [searchSupply, setSearchSupply] = useState('');
+  const [selectedSupplyId, setSelectedSupplyId] = useState('');
+  const [assignSupplyQty, setAssignSupplyQty] = useState<number>(1);
+  const [assignSupplyObs, setAssignSupplyObs] = useState('');
+  const [isSubmittingSupplyAssign, setIsSubmittingSupplyAssign] = useState(false);
+  const [assignSupplyWarning, setAssignSupplyWarning] = useState<string | null>(null);
+
+  // Modal "Liberar suministro"
+  const [releaseSupplyItem, setReleaseSupplyItem] = useState<SupplyProjectItem | null>(null);
+  const [releaseSupplyQty, setReleaseSupplyQty] = useState<number>(1);
+  const [releaseSupplyObs, setReleaseSupplyObs] = useState('');
+  const [isReleasingSupply, setIsReleasingSupply] = useState(false);
+  const [releaseSupplyWarning, setReleaseSupplyWarning] = useState<string | null>(null);
+
+  // Modal "Eliminar asignación de suministro"
+  const [deleteSupplyItem, setDeleteSupplyItem] = useState<SupplyProjectItem | null>(null);
 
   // Modal "Reporte Word"
   const [isWordModalOpen, setIsWordModalOpen] = useState(false);
@@ -101,7 +128,7 @@ export const ProjectShowPage: React.FC = () => {
     setIsDownloadingWord(true);
     try {
       const response = await api.get(`/projects/${projectId}/report-word`, {
-        params: { pageSize, orientation },
+        params: { pageSize },
         responseType: 'blob',
       });
 
@@ -128,12 +155,14 @@ export const ProjectShowPage: React.FC = () => {
     }
   };
 
-  // Cargar datos del proyecto, asignaciones y catálogo
+  // Cargar datos del proyecto, asignaciones y catálogos
   useEffect(() => {
     if (!projectId) return;
     loadProjectData();
     loadAssignments();
     loadAssetsCatalog();
+    loadSupplyAssignments();
+    loadSuppliesCatalog();
   }, [projectId]);
 
   const loadProjectData = async () => {
@@ -161,7 +190,7 @@ export const ProjectShowPage: React.FC = () => {
         setAssignments(res.data.data);
       }
     } catch (err) {
-      console.error('Error al cargar asignaciones del proyecto:', err);
+      console.error('Error al cargar asignaciones de activos del proyecto:', err);
     } finally {
       setIsLoadingAssignments(false);
     }
@@ -180,6 +209,36 @@ export const ProjectShowPage: React.FC = () => {
     }
   };
 
+  const loadSupplyAssignments = async () => {
+    if (!projectId) return;
+    setIsLoadingSupplyAssignments(true);
+    try {
+      const res = await api.get<{ success: boolean; data: SupplyProjectItem[] }>(
+        `/supply-projects/project/${projectId}`,
+      );
+      if (res.data?.data) {
+        setSupplyAssignments(res.data.data);
+      }
+    } catch (err) {
+      console.error('Error al cargar suministros asignados al proyecto:', err);
+    } finally {
+      setIsLoadingSupplyAssignments(false);
+    }
+  };
+
+  const loadSuppliesCatalog = async () => {
+    try {
+      const res = await api.get<{ success: boolean; data: SupplyItem[] }>('/supplies', {
+        params: { limit: 500 },
+      });
+      if (res.data?.data) {
+        setSuppliesCatalog(res.data.data);
+      }
+    } catch (err) {
+      console.error('Error al cargar catálogo de suministros:', err);
+    }
+  };
+
   // Cálculo de disponibilidad de un activo
   const getAssetStockInfo = (asset: AssetModel) => {
     const total = Number(asset.quantity || 1);
@@ -193,10 +252,26 @@ export const ProjectShowPage: React.FC = () => {
     };
   };
 
+  // Cálculo de disponibilidad de un suministro
+  const getSupplyStockInfo = (supply: SupplyItem) => {
+    const total = Number(supply.inputQuantity || 0);
+    const out = Number(supply.outputQuantity || 0);
+    const available = Math.max(0, total - out);
+    return {
+      total,
+      out,
+      available,
+      isOutOfStock: available <= 0,
+    };
+  };
+
   const selectedAsset = assetsCatalog.find((a) => a.id === selectedAssetId);
   const selectedAssetStock = selectedAsset ? getAssetStockInfo(selectedAsset) : null;
 
-  // Manejo de Modal de Asignación
+  const selectedSupply = suppliesCatalog.find((s) => s.id === selectedSupplyId);
+  const selectedSupplyStock = selectedSupply ? getSupplyStockInfo(selectedSupply) : null;
+
+  // Manejo de Modal Asignación de Activo
   const handleOpenAssignModal = () => {
     setSelectedAssetId('');
     setSearchAsset('');
@@ -274,7 +349,63 @@ export const ProjectShowPage: React.FC = () => {
     }
   };
 
-  // Manejo de Modal de Liberación
+  // Manejo de Modal Asignación de Suministro
+  const handleOpenAssignSupplyModal = () => {
+    setSelectedSupplyId('');
+    setSearchSupply('');
+    setAssignSupplyQty(1);
+    setAssignSupplyObs('');
+    setAssignSupplyWarning(null);
+    setIsAssignSupplyModalOpen(true);
+  };
+
+  const handleSelectSupply = (supplyId: string) => {
+    setSelectedSupplyId(supplyId);
+    setAssignSupplyWarning(null);
+
+    const target = suppliesCatalog.find((s) => s.id === supplyId);
+    if (!target) return;
+
+    const stock = getSupplyStockInfo(target);
+    if (stock.isOutOfStock) {
+      setAssignSupplyQty(0);
+      setAssignSupplyWarning('⚠️ No existen unidades disponibles en almacén para este suministro.');
+    } else {
+      setAssignSupplyQty(1);
+    }
+  };
+
+  const handleAssignSupplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectId || !selectedSupplyId || !selectedSupply) return;
+
+    const stock = getSupplyStockInfo(selectedSupply);
+    if (assignSupplyQty <= 0 || assignSupplyQty > stock.available) {
+      setAssignSupplyWarning(`Ingrese una cantidad válida entre 1 y ${stock.available}.`);
+      return;
+    }
+
+    setIsSubmittingSupplyAssign(true);
+    try {
+      await api.post('/supply-projects', {
+        projectId,
+        supplyId: selectedSupplyId,
+        quantity: assignSupplyQty,
+        observations: assignSupplyObs.trim() || undefined,
+      });
+
+      showNotification('success', 'Suministro asignado al proyecto exitosamente.');
+      setIsAssignSupplyModalOpen(false);
+
+      await Promise.all([loadSupplyAssignments(), loadSuppliesCatalog(), loadProjectData()]);
+    } catch (err: any) {
+      showNotification('danger', err.response?.data?.message || 'Error al asignar el suministro.');
+    } finally {
+      setIsSubmittingSupplyAssign(false);
+    }
+  };
+
+  // Liberar Activo Fijo
   const handleOpenReleaseModal = (item: AssetAssignmentItem) => {
     setReleaseItem(item);
     setReleaseQuantity(item.quantity);
@@ -282,34 +413,9 @@ export const ProjectShowPage: React.FC = () => {
     setReleaseValidationWarning(null);
   };
 
-  const handleReleaseQuantityChange = (valStr: string) => {
-    if (!releaseItem) return;
-    const val = parseInt(valStr, 10);
-    if (isNaN(val) || val <= 0) {
-      setReleaseQuantity(isNaN(val) ? 0 : val);
-      setReleaseValidationWarning('⚠️ La cantidad a liberar debe ser mayor a cero.');
-      return;
-    }
-
-    setReleaseQuantity(val);
-
-    if (val > releaseItem.quantity) {
-      setReleaseValidationWarning(
-        `⚠️ No es posible liberar más de las ${releaseItem.quantity} unidades asignadas a este proyecto.`,
-      );
-    } else {
-      setReleaseValidationWarning(null);
-    }
-  };
-
   const handleConfirmReleaseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!releaseItem || !projectId) return;
-
-    if (releaseQuantity <= 0 || releaseQuantity > releaseItem.quantity) {
-      setReleaseValidationWarning(`La cantidad debe ser entre 1 y ${releaseItem.quantity}.`);
-      return;
-    }
 
     setIsReleasing(true);
     try {
@@ -332,7 +438,37 @@ export const ProjectShowPage: React.FC = () => {
     }
   };
 
-  // Confirmar Eliminación Física de Asignación
+  // Liberar Suministro
+  const handleOpenReleaseSupplyModal = (item: SupplyProjectItem) => {
+    setReleaseSupplyItem(item);
+    setReleaseSupplyQty(item.quantity);
+    setReleaseSupplyObs('');
+    setReleaseSupplyWarning(null);
+  };
+
+  const handleConfirmReleaseSupplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!releaseSupplyItem || !projectId) return;
+
+    setIsReleasingSupply(true);
+    try {
+      await api.put(`/supply-projects/${releaseSupplyItem.id}/release`, {
+        quantityToRelease: releaseSupplyQty,
+        observations: releaseSupplyObs.trim() || undefined,
+      });
+
+      showNotification('success', 'Suministro liberado del proyecto correctamente.');
+      setReleaseSupplyItem(null);
+
+      await Promise.all([loadSupplyAssignments(), loadSuppliesCatalog(), loadProjectData()]);
+    } catch (err: any) {
+      showNotification('danger', err.response?.data?.message || 'Error al liberar el suministro.');
+    } finally {
+      setIsReleasingSupply(false);
+    }
+  };
+
+  // Confirmar Eliminación Asignación Activo
   const handleConfirmDelete = async () => {
     if (!deleteItem) return;
 
@@ -351,14 +487,35 @@ export const ProjectShowPage: React.FC = () => {
     }
   };
 
-  // Utiliza formatDate de ../utils/assets para zona horaria América/La_Paz
+  // Confirmar Eliminación Asignación Suministro
+  const handleConfirmDeleteSupply = async () => {
+    if (!deleteSupplyItem) return;
+
+    try {
+      await api.delete(`/supply-projects/${deleteSupplyItem.id}`);
+
+      showNotification('success', 'Asignación de suministro eliminada correctamente.');
+      setDeleteSupplyItem(null);
+
+      await Promise.all([loadSupplyAssignments(), loadSuppliesCatalog(), loadProjectData()]);
+    } catch (err: any) {
+      showNotification('danger', err.response?.data?.message || 'Error al eliminar la asignación.');
+      setDeleteSupplyItem(null);
+    }
+  };
 
   const filteredAssets = assetsCatalog.filter((a) => {
     const q = searchAsset.toLowerCase();
     return a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q);
   });
 
+  const filteredSupplies = suppliesCatalog.filter((s) => {
+    const q = searchSupply.toLowerCase();
+    return s.name.toLowerCase().includes(q) || (s.category?.name && s.category.name.toLowerCase().includes(q));
+  });
+
   const activeAssignmentsCount = assignments.filter((a) => !a.releasedAt).length;
+  const activeSupplyAssignmentsCount = supplyAssignments.filter((s) => !s.releasedAt).length;
 
   if (isLoadingProject && !project) {
     return (
@@ -373,7 +530,7 @@ export const ProjectShowPage: React.FC = () => {
       <div className="space-y-6">
         <button
           onClick={() => navigate('/proyectos')}
-          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
+          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
         >
           <HiArrowLeft />
           <span>Volver a Proyectos</span>
@@ -390,10 +547,11 @@ export const ProjectShowPage: React.FC = () => {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-5 right-5 z-[99999] p-4 rounded-2xl shadow-2xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${toastMessage.type === 'success'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            : 'bg-rose-50 border-rose-200 text-rose-800'
-            }`}
+          className={`fixed top-5 right-5 z-[99999] p-4 rounded-2xl shadow-2xl border text-xs font-bold animate-in slide-in-from-top-2 duration-200 ${
+            toastMessage.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}
         >
           {toastMessage.text}
         </div>
@@ -404,7 +562,7 @@ export const ProjectShowPage: React.FC = () => {
         <div className="space-y-1">
           <button
             onClick={() => navigate('/proyectos')}
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors mb-1"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors mb-1 cursor-pointer"
           >
             <HiArrowLeft className="text-sm" />
             <span>Volver a Proyectos Mineros e Institucionales</span>
@@ -419,20 +577,30 @@ export const ProjectShowPage: React.FC = () => {
           <button
             onClick={() => setIsWordModalOpen(true)}
             title="Descargar Informe de Inventario en documento Word (.docx)"
-            className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all shrink-0 border border-blue-800"
+            className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all shrink-0 border border-blue-800 cursor-pointer"
           >
             <HiOutlineArrowDownTray className="text-base text-amber-400" />
             <span>Reporte Word</span>
           </button>
 
           {!isGuest && (
-            <button
-              onClick={handleOpenAssignModal}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all shrink-0"
-            >
-              <HiOutlinePlus className="text-base" />
-              <span>Asignar activo</span>
-            </button>
+            <>
+              <button
+                onClick={handleOpenAssignModal}
+                className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all shrink-0 cursor-pointer"
+              >
+                <HiOutlinePlus className="text-base" />
+                <span>Asignar activo</span>
+              </button>
+
+              <button
+                onClick={handleOpenAssignSupplyModal}
+                className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition-all shrink-0 cursor-pointer"
+              >
+                <HiOutlinePlus className="text-base" />
+                <span>Asignar suministro</span>
+              </button>
+            </>
           )}
 
           <button
@@ -440,9 +608,11 @@ export const ProjectShowPage: React.FC = () => {
               loadProjectData();
               loadAssignments();
               loadAssetsCatalog();
+              loadSupplyAssignments();
+              loadSuppliesCatalog();
             }}
             title="Actualizar datos"
-            className="flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl shadow-2xs transition-all"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer"
           >
             <HiOutlineArrowPathRoundedSquare className="text-base text-amber-500" />
             <span>Refrescar</span>
@@ -450,181 +620,341 @@ export const ProjectShowPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Tarjeta Información General del Proyecto */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-              <HiOutlineMapPin className="text-amber-500 text-sm" />
-              <span>Dirección / Ubicación</span>
-            </div>
-            <p className="text-sm font-semibold text-slate-800">{project.address || 'Sin dirección registrada'}</p>
+      {/* Detalles Informativos del Proyecto */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-1">
+          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
+            <HiOutlineUser className="text-amber-500 text-sm" />
+            <span>Responsable Técnico</span>
           </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-              <HiOutlineUser className="text-amber-500 text-sm" />
-              <span>Responsable</span>
-            </div>
-            <p className="text-sm font-semibold text-slate-800">{project.responsible || 'Sin responsable asignado'}</p>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-              <HiOutlineCalendar className="text-amber-500 text-sm" />
-              <span>Vigencia del Proyecto</span>
-            </div>
-            <p className="text-sm font-semibold text-slate-800">
-              {formatDate(project.startDate)} - {formatDate(project.endDate)}
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-              <HiOutlineCube className="text-amber-500 text-sm" />
-              <span>Activos Asignados</span>
-            </div>
-            <p className="text-sm font-extrabold text-blue-950">
-              {activeAssignmentsCount} vigentes <span className="text-xs font-normal text-slate-400">({assignments.length} historial)</span>
-            </p>
-          </div>
+          <p className="text-sm font-bold text-slate-800">{project.responsible || 'Sin asignar'}</p>
         </div>
 
-        {project.description && (
-          <div className="mt-5 pt-4 border-t border-slate-100 flex items-start gap-2">
-            <HiOutlineDocumentText className="text-slate-400 text-base shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-600 font-medium leading-relaxed">{project.description}</p>
+        <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-1">
+          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
+            <HiOutlineMapPin className="text-amber-500 text-sm" />
+            <span>Ubicación / Dirección</span>
           </div>
-        )}
+          <p className="text-sm font-bold text-slate-800 truncate">{project.address || 'Sin dirección especificada'}</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-1">
+          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
+            <HiOutlineCalendar className="text-amber-500 text-sm" />
+            <span>Vigencia del Proyecto</span>
+          </div>
+          <p className="text-xs font-bold text-slate-800">
+            {project.startDate ? formatDate(project.startDate) : '—'} al {project.endDate ? formatDate(project.endDate) : 'Indefinido'}
+          </p>
+        </div>
       </div>
 
-      {/* Tabla Activos Asignados al Proyecto */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl shadow-xs overflow-hidden space-y-4">
-        <div className="p-6 pb-2 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">Activos Asignados al Proyecto</h3>
-            <p className="text-xs text-slate-500">Historial y estado de los activos vinculados a este proyecto.</p>
-          </div>
-          <button
-            onClick={handleOpenAssignModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition-all"
-          >
-            <HiOutlinePlus className="text-sm" />
-            <span>Asignar activo</span>
-          </button>
-        </div>
+      {/* Pestañas de Asignación (Activos Fijos vs Suministros) */}
+      <div className="flex border-b border-slate-200 bg-white rounded-t-3xl px-4 pt-4 gap-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab('ASSETS')}
+          className={`flex items-center gap-2 px-5 py-3 font-bold text-xs rounded-t-2xl transition-all border-b-2 cursor-pointer ${
+            activeTab === 'ASSETS'
+              ? 'border-amber-500 text-amber-600 bg-amber-50/50'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <HiOutlineBriefcase className="text-base" />
+          <span>Activos Fijos Asignados ({activeAssignmentsCount})</span>
+        </button>
 
-        {isLoadingAssignments ? (
-          <div className="py-12">
-            <LoadingSpinner label="Cargando activos del proyecto..." />
+        <button
+          type="button"
+          onClick={() => setActiveTab('SUPPLIES')}
+          className={`flex items-center gap-2 px-5 py-3 font-bold text-xs rounded-t-2xl transition-all border-b-2 cursor-pointer ${
+            activeTab === 'SUPPLIES'
+              ? 'border-emerald-500 text-emerald-600 bg-emerald-50/50'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <HiOutlineCube className="text-base" />
+          <span>Suministros / Materiales Asignados ({activeSupplyAssignmentsCount})</span>
+        </button>
+      </div>
+
+      {/* TAB 1: Tabla Activos Fijos Asignados al Proyecto */}
+      {activeTab === 'ASSETS' && (
+        <div className="bg-white border border-slate-200/80 rounded-b-3xl shadow-xs overflow-hidden space-y-4">
+          <div className="p-6 pb-2 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Activos Fijos Asignados al Proyecto</h3>
+              <p className="text-xs text-slate-500">Historial y estado de los bienes vinculados a este proyecto.</p>
+            </div>
+            {!isGuest && (
+              <button
+                onClick={handleOpenAssignModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                <HiOutlinePlus className="text-sm" />
+                <span>Asignar activo</span>
+              </button>
+            )}
           </div>
-        ) : assignments.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs font-medium space-y-3">
-            <p>No se han asignado activos fijos a este proyecto.</p>
-            <button
-              onClick={handleOpenAssignModal}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-blue-950 rounded-xl text-xs font-bold hover:bg-amber-400 transition-all"
-            >
-              <HiOutlinePlus className="text-sm" />
-              <span>Asignar activo ahora</span>
-            </button>
+
+          {isLoadingAssignments ? (
+            <div className="py-12">
+              <LoadingSpinner label="Cargando activos del proyecto..." />
+            </div>
+          ) : assignments.length === 0 ? (
+            <div className="p-12 text-center text-slate-400 text-xs font-medium space-y-3">
+              <p>No se han asignado activos fijos a este proyecto.</p>
+              {!isGuest && (
+                <button
+                  onClick={handleOpenAssignModal}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-blue-950 rounded-xl text-xs font-bold hover:bg-amber-400 transition-all cursor-pointer"
+                >
+                  <HiOutlinePlus className="text-sm" />
+                  <span>Asignar activo ahora</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="px-6 py-3.5">Código</th>
+                    <th className="px-6 py-3.5">Activo Fijo</th>
+                    <th className="px-6 py-3.5 text-center">Cantidad</th>
+                    <th className="px-6 py-3.5 text-center">Asignado El</th>
+                    <th className="px-6 py-3.5 text-center">Estado / Liberación</th>
+                    <th className="px-6 py-3.5">Observaciones</th>
+                    <th className="px-6 py-3.5 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {assignments.map((item) => {
+                    const isReleased = !!item.releasedAt;
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="px-6 py-4 font-bold text-blue-950">{item.asset?.code || 'S/C'}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-800">{item.asset?.name || 'Activo Fijo'}</span>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-[11px] text-slate-400 font-medium">
+                              {item.asset?.category?.name && (
+                                <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-semibold">
+                                  {item.asset.category.name}
+                                </span>
+                              )}
+                              {item.asset?.brand && <span>• {item.asset.brand}</span>}
+                              {item.asset?.model && <span>({item.asset.model})</span>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-blue-50 text-blue-950 border border-blue-200">
+                            {item.quantity} unidades
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center text-slate-600 font-medium">
+                          {formatDate(item.assignedAt)}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {isReleased ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              Liberado: {formatDate(item.releasedAt)}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Vigente en Proyecto
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-slate-500 font-normal">
+                          {item.observations || 'Sin observaciones'}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {!isGuest && !isReleased && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenReleaseModal(item)}
+                                title="Liberar activo del proyecto"
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold text-[11px] transition-colors border border-amber-200 cursor-pointer"
+                              >
+                                <HiOutlineLockOpen className="text-sm" />
+                                <span>Liberar</span>
+                              </button>
+                            )}
+
+                            {!isGuest && (
+                              <button
+                                type="button"
+                                onClick={() => setDeleteItem(item)}
+                                title="Eliminar asignación"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <HiOutlineTrash className="text-base" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 2: Tabla Suministros / Materiales Asignados al Proyecto */}
+      {activeTab === 'SUPPLIES' && (
+        <div className="bg-white border border-slate-200/80 rounded-b-3xl shadow-xs overflow-hidden space-y-4">
+          <div className="p-6 pb-2 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Suministros y Materiales Asignados</h3>
+              <p className="text-xs text-slate-500">Insumos y materiales extraídos del almacén para este proyecto.</p>
+            </div>
+            {!isGuest && (
+              <button
+                onClick={handleOpenAssignSupplyModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                <HiOutlinePlus className="text-sm" />
+                <span>Asignar suministro</span>
+              </button>
+            )}
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="px-6 py-3.5">Código</th>
-                  <th className="px-6 py-3.5">Activo Fijo</th>
-                  <th className="px-6 py-3.5 text-center">Cantidad</th>
-                  <th className="px-6 py-3.5 text-center">Asignado El</th>
-                  <th className="px-6 py-3.5 text-center">Estado / Liberación</th>
-                  <th className="px-6 py-3.5">Observaciones</th>
-                  <th className="px-6 py-3.5 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {assignments.map((item) => {
-                  const isReleased = !!item.releasedAt;
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="px-6 py-4 font-bold text-blue-950">{item.asset?.code || 'S/C'}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-800">{item.asset?.name || 'Activo Fijo'}</span>
-                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-[11px] text-slate-400 font-medium">
-                            {item.asset?.category?.name && (
-                              <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-semibold">
-                                {item.asset.category.name}
+
+          {isLoadingSupplyAssignments ? (
+            <div className="py-12">
+              <LoadingSpinner label="Cargando suministros asignados al proyecto..." />
+            </div>
+          ) : supplyAssignments.length === 0 ? (
+            <div className="p-12 text-center text-slate-400 text-xs font-medium space-y-3">
+              <p>No se han asignado suministros o materiales a este proyecto.</p>
+              {!isGuest && (
+                <button
+                  onClick={handleOpenAssignSupplyModal}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 transition-all cursor-pointer"
+                >
+                  <HiOutlinePlus className="text-sm" />
+                  <span>Asignar suministro ahora</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5">Material / Suministro</th>
+                    <th className="px-5 py-3.5">Categoría / Ubicación</th>
+                    <th className="px-5 py-3.5 text-center">Asignado</th>
+                    <th className="px-5 py-3.5 text-center">Salida Proyecto</th>
+                    <th className="px-5 py-3.5 text-center">Saldo Disponible</th>
+                    <th className="px-5 py-3.5 text-center">Asignado El</th>
+                    <th className="px-5 py-3.5 text-center">Estado / Liberación</th>
+                    <th className="px-5 py-3.5">Observaciones</th>
+                    <th className="px-5 py-3.5 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {supplyAssignments.map((item) => {
+                    const isReleased = !!item.releasedAt;
+                    const stockInProject = Math.max(0, item.quantity - (item.outputQuantity || 0));
+
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="px-5 py-4 font-bold text-slate-800">
+                          {item.supply?.name || 'Suministro'}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex flex-col gap-1">
+                            {item.supply?.category?.name && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/60 w-max">
+                                {item.supply.category.name}
                               </span>
                             )}
-                            {item.asset?.brand && <span>• {item.asset.brand}</span>}
-                            {item.asset?.model && <span>({item.asset.model})</span>}
+                            {item.supply?.location?.name && (
+                              <span className="text-[11px] font-semibold text-slate-500">
+                                📍 {item.supply.location.name}
+                              </span>
+                            )}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-blue-50 text-blue-950 border border-blue-200">
-                          {item.quantity} unidades
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center text-slate-600 font-medium">
-                        {formatDate(item.assignedAt)}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {isReleased ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                            Liberado: {formatDate(item.releasedAt)}
+                        </td>
+                        <td className="px-5 py-4 text-center font-bold text-slate-700">
+                          {item.quantity} {item.supply?.unit || 'PZA'}
+                        </td>
+                        <td className="px-5 py-4 text-center font-bold text-rose-600">
+                          {item.outputQuantity || 0} {item.supply?.unit || 'PZA'}
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold ${
+                              stockInProject <= 0
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            }`}
+                          >
+                            {stockInProject} {item.supply?.unit || 'PZA'}
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Vigente en Proyecto
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 font-normal">
-                        {item.observations || 'Sin observaciones'}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {!isGuest && !isReleased && (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenReleaseModal(item)}
-                              title="Liberar activo del proyecto"
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-amber-700 bg-amber-50 hover:bg-amber-100 font-bold text-[11px] transition-colors border border-amber-200"
-                            >
-                              <HiOutlineLockOpen className="text-sm" />
-                              <span>Liberar</span>
-                            </button>
+                        </td>
+                        <td className="px-6 py-4 text-center text-slate-600 font-medium">
+                          {formatDate(item.assignedAt)}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {isReleased ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              Liberado: {formatDate(item.releasedAt)}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Vigente en Proyecto
+                            </span>
                           )}
+                        </td>
+                        <td className="px-6 py-4 text-slate-500 font-normal">
+                          {item.observations || 'Sin observaciones'}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {!isGuest && !isReleased && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenReleaseSupplyModal(item)}
+                                title="Liberar suministro del proyecto"
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-emerald-800 bg-emerald-50 hover:bg-emerald-100 font-bold text-[11px] transition-colors border border-emerald-200 cursor-pointer"
+                              >
+                                <HiOutlineLockOpen className="text-sm" />
+                                <span>Liberar</span>
+                              </button>
+                            )}
 
-                          {!isGuest && (
-                            <button
-                              type="button"
-                              onClick={() => setDeleteItem(item)}
-                              title="Eliminar asignación"
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            >
-                              <HiOutlineTrash className="text-base" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                            {!isGuest && (
+                              <button
+                                type="button"
+                                onClick={() => setDeleteSupplyItem(item)}
+                                title="Eliminar asignación"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <HiOutlineTrash className="text-base" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* MODAL 1: Asignar Activo al Proyecto */}
       {isAssignModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-955/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -641,131 +971,114 @@ export const ProjectShowPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAssignModalOpen(false)}
-                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition-colors"
+                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition-colors cursor-pointer"
               >
                 <HiXMark className="text-xl" />
               </button>
             </div>
 
             <form onSubmit={handleAssignAssetSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Buscar y Seleccionar Activo Fijo <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative mb-2">
-                  <HiOutlineMagnifyingGlass className="absolute left-3 top-3 text-slate-400 text-xs" />
+              {/* Buscador de Activo */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">Buscar Activo Fijo</label>
+                <div className="relative">
+                  <HiOutlineMagnifyingGlass className="absolute left-3.5 top-3 text-slate-400 text-sm" />
                   <input
                     type="text"
                     value={searchAsset}
                     onChange={(e) => setSearchAsset(e.target.value)}
                     placeholder="Filtrar por código o nombre..."
-                    className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all shadow-2xs"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-amber-500 transition-all"
                   />
                 </div>
-
-                <select
-                  value={selectedAssetId}
-                  onChange={(e) => handleSelectAsset(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:border-amber-500 focus:bg-white transition-all shadow-2xs"
-                >
-                  <option value="">-- Seleccionar Activo Fijo ({filteredAssets.length} disponibles) --</option>
-                  {filteredAssets.map((asset) => {
-                    const stock = getAssetStockInfo(asset);
-                    return (
-                      <option
-                        key={asset.id}
-                        value={asset.id}
-                        disabled={stock.isOutOfStock}
-                        className={stock.isOutOfStock ? 'text-slate-400 bg-slate-50' : 'text-slate-900'}
-                      >
-                        [{asset.code}] {asset.name} — Disponibles: {stock.available} de {stock.total}
-                      </option>
-                    );
-                  })}
-                </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Cantidad a Asignar <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={selectedAssetStock ? selectedAssetStock.available : 9999}
-                  value={assignQuantity}
-                  onChange={(e) => handleAssignQuantityChange(e.target.value)}
-                  disabled={!selectedAssetId || (selectedAssetStock?.isOutOfStock ?? false)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-amber-500 disabled:bg-slate-100 disabled:text-slate-400 transition-all shadow-2xs"
-                />
+              {/* Selector de Activos */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">Seleccione el Activo</label>
+                <div className="max-h-44 overflow-y-auto border border-slate-200 rounded-2xl divide-y divide-slate-100 bg-slate-50/50">
+                  {filteredAssets.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-slate-400">No se encontraron activos.</div>
+                  ) : (
+                    filteredAssets.map((asset) => {
+                      const stock = getAssetStockInfo(asset);
+                      const isSelected = selectedAssetId === asset.id;
+                      return (
+                        <div
+                          key={asset.id}
+                          onClick={() => handleSelectAsset(asset.id)}
+                          className={`p-3 text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                            isSelected ? 'bg-amber-50/80 font-bold border-l-4 border-amber-500' : 'hover:bg-slate-100/60'
+                          }`}
+                        >
+                          <div>
+                            <span className="font-bold text-slate-800">{asset.code}</span> - {asset.name}
+                            <div className="text-[10px] text-slate-400 font-normal">
+                              Disponibles: {stock.available} de {stock.total} unidades
+                            </div>
+                          </div>
+                          {stock.isOutOfStock ? (
+                            <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              Sin Stock
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              Stock: {stock.available}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Observaciones de Asignación (Opcional)
-                </label>
-                <input
-                  type="text"
+              {/* Cantidad y Advertencia */}
+              {selectedAsset && (
+                <div className="p-4 bg-amber-50/60 border border-amber-200/80 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-900">Cantidad a Asignar:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={selectedAssetStock?.available || 1}
+                      value={assignQuantity}
+                      onChange={(e) => handleAssignQuantityChange(e.target.value)}
+                      className="w-24 px-3 py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-bold text-center focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  {assignValidationWarning && (
+                    <div className="text-[11px] font-semibold text-rose-700">{assignValidationWarning}</div>
+                  )}
+                </div>
+              )}
+
+              {/* Observaciones */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">Observaciones / Notas</label>
+                <textarea
+                  rows={2}
                   value={assignObservations}
                   onChange={(e) => setAssignObservations(e.target.value)}
-                  placeholder="Ej: Asignado para operación en mina / frente de trabajo..."
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:border-amber-500 focus:bg-white transition-all shadow-2xs"
+                  placeholder="Detalles sobre el uso o condición de entrega..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-amber-500 transition-all resize-none"
                 />
               </div>
 
-              {selectedAsset && selectedAssetStock && (
-                <div
-                  className={`p-3 rounded-2xl text-xs font-semibold flex items-center justify-between border ${selectedAssetStock.isOutOfStock
-                    ? 'bg-rose-50 border-rose-200 text-rose-700'
-                    : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                    }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {selectedAssetStock.isOutOfStock ? (
-                      <HiOutlineExclamationTriangle className="text-base text-rose-500 shrink-0" />
-                    ) : (
-                      <HiOutlineCheckCircle className="text-base text-emerald-600 shrink-0" />
-                    )}
-                    <span>
-                      <strong>{selectedAsset.name}</strong> ({selectedAsset.code}):{' '}
-                      {selectedAssetStock.isOutOfStock
-                        ? 'Sin unidades disponibles en almacén'
-                        : `Disponibles: ${selectedAssetStock.available} de ${selectedAssetStock.total} unidades totales`}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {assignValidationWarning && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs font-semibold text-amber-800 flex items-center gap-2">
-                  <HiOutlineExclamationTriangle className="text-base shrink-0 text-amber-600" />
-                  <span>{assignValidationWarning}</span>
-                </div>
-              )}
-
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsAssignModalOpen(false)}
-                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors"
+                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={
-                    !selectedAssetId ||
-                    assignQuantity <= 0 ||
-                    (selectedAssetStock?.isOutOfStock ?? true) ||
-                    assignQuantity > (selectedAssetStock?.available ?? 0) ||
-                    isSubmittingAssign
-                  }
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  disabled={isSubmittingAssign || !selectedAssetId || !!assignValidationWarning}
+                  className="px-5 py-2.5 text-xs font-bold text-blue-950 bg-amber-500 hover:bg-amber-400 rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  <HiOutlinePlus className="text-base" />
-                  <span>{isSubmittingAssign ? 'Asignando...' : 'Asignar Activo'}</span>
+                  {isSubmittingAssign ? 'Asignando...' : 'Confirmar Asignación'}
                 </button>
               </div>
             </form>
@@ -773,100 +1086,197 @@ export const ProjectShowPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 2: Liberar Activo del Proyecto (con Cantidad y Motivo) */}
-      {releaseItem && (
+      {/* MODAL 2: Asignar Suministro al Proyecto */}
+      {isAssignSupplyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-100 bg-amber-50/60 flex items-center justify-between">
+          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-amber-500/10 text-amber-700 rounded-2xl">
-                  <HiOutlineLockOpen className="text-xl" />
+                <div className="p-2.5 bg-emerald-500/10 text-emerald-600 rounded-2xl">
+                  <HiOutlinePlus className="text-xl" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Liberar Activo del Proyecto</h3>
+                  <h3 className="text-base font-bold text-slate-800">Asignar Suministro al Proyecto</h3>
                   <p className="text-xs text-slate-500 font-medium">
-                    Regresar unidades del activo al stock general disponible.
+                    Seleccione un material de almacén e indique la cantidad a entregar al proyecto.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
+                onClick={() => setIsAssignSupplyModalOpen(false)}
+                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition-colors cursor-pointer"
+              >
+                <HiXMark className="text-xl" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAssignSupplySubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
+              {/* Buscador de Suministro */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">Buscar Suministro / Material</label>
+                <div className="relative">
+                  <HiOutlineMagnifyingGlass className="absolute left-3.5 top-3 text-slate-400 text-sm" />
+                  <input
+                    type="text"
+                    value={searchSupply}
+                    onChange={(e) => setSearchSupply(e.target.value)}
+                    placeholder="Filtrar por nombre o categoría de suministro..."
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Selector de Suministros */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">Seleccione el Material</label>
+                <div className="max-h-44 overflow-y-auto border border-slate-200 rounded-2xl divide-y divide-slate-100 bg-slate-50/50">
+                  {filteredSupplies.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-slate-400">No se encontraron suministros.</div>
+                  ) : (
+                    filteredSupplies.map((supply) => {
+                      const stock = getSupplyStockInfo(supply);
+                      const isSelected = selectedSupplyId === supply.id;
+                      return (
+                        <div
+                          key={supply.id}
+                          onClick={() => handleSelectSupply(supply.id)}
+                          className={`p-3 text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                            isSelected ? 'bg-emerald-50/80 font-bold border-l-4 border-emerald-500' : 'hover:bg-slate-100/60'
+                          }`}
+                        >
+                          <div>
+                            <span className="font-bold text-slate-800">{supply.name}</span>
+                            <div className="text-[10px] text-slate-400 font-normal">
+                              Categoría: {supply.category?.name || 'General'} • Disponible: {stock.available} {supply.unit}
+                            </div>
+                          </div>
+                          {stock.isOutOfStock ? (
+                            <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              Sin Stock
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              Stock: {stock.available} {supply.unit}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Cantidad y Advertencia */}
+              {selectedSupply && (
+                <div className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-900">Cantidad a Asignar ({selectedSupply.unit}):</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={selectedSupplyStock?.available || 1}
+                      value={assignSupplyQty}
+                      onChange={(e) => setAssignSupplyQty(Number(e.target.value))}
+                      className="w-24 px-3 py-1.5 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-center focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  {assignSupplyWarning && (
+                    <div className="text-[11px] font-semibold text-rose-700">{assignSupplyWarning}</div>
+                  )}
+                </div>
+              )}
+
+              {/* Observaciones */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">Observaciones / Notas</label>
+                <textarea
+                  rows={2}
+                  value={assignSupplyObs}
+                  onChange={(e) => setAssignSupplyObs(e.target.value)}
+                  placeholder="Detalles sobre entrega de materiales (Ej: Para el área de mantenimiento)..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500 transition-all resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAssignSupplyModalOpen(false)}
+                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingSupplyAssign || !selectedSupplyId || !!assignSupplyWarning}
+                  className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmittingSupplyAssign ? 'Asignando...' : 'Confirmar Entrega'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Liberar Activo del Proyecto */}
+      {releaseItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
+            <div className="px-6 py-4 border-b border-slate-100 bg-amber-50/50 flex items-center justify-between">
+              <h3 className="text-base font-bold text-amber-950">Liberar Activo Fijo del Proyecto</h3>
+              <button
+                type="button"
                 onClick={() => setReleaseItem(null)}
-                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition-colors"
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               >
                 <HiXMark className="text-xl" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmReleaseSubmit} className="p-6 space-y-4">
-              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs space-y-1">
-                <div className="font-bold text-slate-800">
-                  Activo: {releaseItem.asset?.name} ({releaseItem.asset?.code || 'S/C'})
-                </div>
-                <div className="text-slate-600">
-                  Actualmente asignados en este proyecto: <strong className="text-blue-950">{releaseItem.quantity} unidades</strong>.
-                </div>
-              </div>
+              <p className="text-xs text-slate-600 font-medium">
+                Indique la cantidad de unidades que retornarán al almacén desde este proyecto.
+              </p>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Cantidad a Liberar <span className="text-rose-500">*</span>
-                </label>
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">Cantidad a Liberar</label>
                 <input
                   type="number"
-                  min={1}
+                  min="1"
                   max={releaseItem.quantity}
                   value={releaseQuantity}
-                  onChange={(e) => handleReleaseQuantityChange(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-amber-500 transition-all shadow-2xs"
+                  onChange={(e) => setReleaseQuantity(Number(e.target.value))}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
                 />
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  Máximo a liberar: {releaseItem.quantity} unidades.
-                </span>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Motivo / Observaciones de Liberación <span className="text-rose-500">*</span>
-                </label>
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">Observaciones de Devolución</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={releaseObservations}
                   onChange={(e) => setReleaseObservations(e.target.value)}
-                  placeholder="Ingrese el motivo de devolución (ej: Finalización de fase, mantenimiento, retorno a almacén)..."
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium focus:outline-none focus:border-amber-500 focus:bg-white transition-all shadow-2xs resize-none"
+                  placeholder="Ej: Devolución por conclusión de etapa..."
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs resize-none"
                 />
               </div>
 
-              {releaseValidationWarning && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs font-semibold text-amber-800 flex items-center gap-2">
-                  <HiOutlineExclamationTriangle className="text-base shrink-0 text-amber-600" />
-                  <span>{releaseValidationWarning}</span>
-                </div>
-              )}
-
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setReleaseItem(null)}
-                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={
-                    releaseQuantity <= 0 ||
-                    releaseQuantity > releaseItem.quantity ||
-                    !releaseObservations.trim() ||
-                    isReleasing
-                  }
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  disabled={isReleasing}
+                  className="px-5 py-2 text-xs font-bold text-amber-950 bg-amber-500 hover:bg-amber-400 rounded-xl shadow-xs transition-all cursor-pointer"
                 >
-                  <HiOutlineLockOpen className="text-base" />
-                  <span>{isReleasing ? 'Liberando...' : 'Confirmar Liberación'}</span>
+                  {isReleasing ? 'Procesando...' : 'Confirmar Liberación'}
                 </button>
               </div>
             </form>
@@ -874,43 +1284,107 @@ export const ProjectShowPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 3: Confirmación de Eliminación Física */}
+      {/* MODAL 4: Liberar Suministro del Proyecto */}
+      {releaseSupplyItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
+            <div className="px-6 py-4 border-b border-slate-100 bg-emerald-50/50 flex items-center justify-between">
+              <h3 className="text-base font-bold text-emerald-950">Liberar / Devolver Suministro</h3>
+              <button
+                type="button"
+                onClick={() => setReleaseSupplyItem(null)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <HiXMark className="text-xl" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmReleaseSupplySubmit} className="p-6 space-y-4">
+              <p className="text-xs text-slate-600 font-medium">
+                Indique la cantidad del suministro <strong>"{releaseSupplyItem.supply?.name}"</strong> que retorna al almacén.
+              </p>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">Cantidad a Liberar ({releaseSupplyItem.supply?.unit})</label>
+                <input
+                  type="number"
+                  min="1"
+                  max={releaseSupplyItem.quantity}
+                  value={releaseSupplyQty}
+                  onChange={(e) => setReleaseSupplyQty(Number(e.target.value))}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">Observaciones de Devolución</label>
+                <textarea
+                  rows={2}
+                  value={releaseSupplyObs}
+                  onChange={(e) => setReleaseSupplyObs(e.target.value)}
+                  placeholder="Ej: Material no utilizado en proyecto..."
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setReleaseSupplyItem(null)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isReleasingSupply}
+                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  {isReleasingSupply ? 'Procesando...' : 'Confirmar Liberación'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmación Eliminar Asignación Activo */}
       <ConfirmDialog
         isOpen={!!deleteItem}
-        onOpenChange={(open) => !open && setDeleteItem(null)}
-        title="¿Eliminar Asignación?"
-        message={`¿Está seguro de eliminar físicamente el registro de asignación de "${deleteItem?.asset?.name}" (${deleteItem?.quantity} unidades)? ${!deleteItem?.releasedAt
-          ? 'Las unidades se devolverán automáticamente al stock disponible en el almacén de activos.'
-          : ''
-          }`}
-        confirmText={isDeleting ? 'Eliminando...' : 'Sí, Eliminar Registro'}
-        color="danger"
+        onOpenChange={(open) => { if (!open) setDeleteItem(null); }}
         onConfirm={handleConfirmDelete}
+        title="Eliminar Asignación de Activo"
+        message={`¿Está seguro de eliminar la asignación del activo "${deleteItem?.asset?.name}"? Esta acción eliminará el registro.`}
+        confirmText="Sí, eliminar"
+        color="danger"
       />
 
-      {/* MODAL 4: Configuración Reporte Word */}
-      {isWordModalOpen && (
-        <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl max-w-md w-full space-y-5 relative">
-            <button
-              onClick={() => setIsWordModalOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
-            >
-              <HiXMark className="text-lg" />
-            </button>
+      {/* Confirmación Eliminar Asignación Suministro */}
+      <ConfirmDialog
+        isOpen={!!deleteSupplyItem}
+        onOpenChange={(open) => { if (!open) setDeleteSupplyItem(null); }}
+        onConfirm={handleConfirmDeleteSupply}
+        title="Eliminar Asignación de Suministro"
+        message={`¿Está seguro de eliminar la asignación del suministro "${deleteSupplyItem?.supply?.name}"? Esta acción eliminará el registro.`}
+        confirmText="Sí, eliminar"
+        color="danger"
+      />
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-blue-900">
-                <HiOutlineDocumentText className="text-xl text-amber-500" />
-                <h3 className="text-base font-bold">Configurar Informe Word (.docx)</h3>
-              </div>
-              <p className="text-xs text-slate-500">
-                Seleccione el formato y la orientación de página para exportar el inventario de activos del proyecto.
-              </p>
+      {/* Modal Reporte Word */}
+      {isWordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 space-y-5 border border-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-800">Exportar Reporte de Inventario</h3>
+              <button
+                onClick={() => setIsWordModalOpen(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <HiXMark className="text-xl" />
+              </button>
             </div>
 
             <div className="space-y-4 text-xs font-semibold text-slate-700">
-              {/* Tamaño de Hoja */}
               <div className="space-y-1.5">
                 <label className="block text-slate-700 font-bold">Tamaño de Hoja</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -923,19 +1397,17 @@ export const ProjectShowPage: React.FC = () => {
                       key={item.id}
                       type="button"
                       onClick={() => setPageSize(item.id as any)}
-                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${pageSize === item.id
-                        ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
-                        : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
-                        }`}
+                      className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                        pageSize === item.id
+                          ? 'border-blue-900 bg-blue-50/70 text-blue-950 font-bold shadow-xs'
+                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-600 font-medium'
+                      }`}
                     >
                       <span className="capitalize">{item.label}</span>
                       <span className="text-[10px] text-slate-400 font-normal">{item.sub}</span>
                     </button>
                   ))}
                 </div>
-              </div>
-              <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-[11px] text-amber-900 font-medium leading-relaxed">
-                ℹ️ El documento se generará con margen <strong>Estrecho</strong> e incluirá el logo institucional de COMIBOL y la tabla de activos asignados.
               </div>
             </div>
 
@@ -944,7 +1416,7 @@ export const ProjectShowPage: React.FC = () => {
                 type="button"
                 onClick={() => setIsWordModalOpen(false)}
                 disabled={isDownloadingWord}
-                className="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all"
+                className="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
               >
                 Cancelar
               </button>
@@ -952,7 +1424,7 @@ export const ProjectShowPage: React.FC = () => {
                 type="button"
                 onClick={handleDownloadWordReport}
                 disabled={isDownloadingWord}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all disabled:opacity-50"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer"
               >
                 {isDownloadingWord ? (
                   <span>Generando Word...</span>

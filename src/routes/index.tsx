@@ -14,6 +14,7 @@ import Reports from '../pages/Reports';
 import Settings from '../pages/Settings';
 import UsersList from '../pages/UsersList';
 import SuppliesList from '../pages/SuppliesList';
+import PersonalList from '../pages/PersonalList';
 import NotFound from '../pages/NotFound';
 import LoginPage from '../pages/LoginPage';
 import ProtectedRoute from './ProtectedRoute';
@@ -45,6 +46,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="activos/:id/editar" element={<AssetForm />} />
         <Route path="suministros" element={<SuppliesList />} />
         <Route path="supplies" element={<SuppliesList />} />
+        <Route path="personal" element={<PersonalList />} />
+        <Route path="acquisitions" element={<PersonalList />} />
         <Route path="usuarios" element={<UsersList />} />
         <Route path="reportes" element={<Reports />} />
         <Route path="configuracion" element={<Settings />} />

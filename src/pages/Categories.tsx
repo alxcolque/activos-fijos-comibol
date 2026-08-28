@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useCategoryStore } from '../store/categoryStore';
-import type { AssetCategory, CreateCategoryDTO } from '../interfaces/category.interface';
+import type { AssetCategory, CreateCategoryDTO, CategoryType } from '../interfaces/category.interface';
 import { CategoryFormModal } from '../components/categories/CategoryFormModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmptyState } from '../components/EmptyState';
 import { SearchBar } from '../components/SearchBar';
-import { HiPlus, HiPencilSquare, HiTrash, HiOutlineTag } from 'react-icons/hi2';
+import { HiPlus, HiPencilSquare, HiTrash, HiOutlineTag, HiOutlineBriefcase, HiOutlineCube } from 'react-icons/hi2';
 
 export const CategoriesPage: React.FC = () => {
   const { categories, isLoading, error, fetchCategories, createCategory, updateCategory, deleteCategory } =
     useCategoryStore();
 
+  const [activeTab, setActiveTab] = useState<CategoryType>('ASSET');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null);
@@ -20,8 +21,8 @@ export const CategoriesPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    fetchCategories({ type: activeTab });
+  }, [activeTab]);
 
   const showNotification = (type: 'success' | 'danger', text: string) => {
     setToastMessage({ type, text });
@@ -29,14 +30,15 @@ export const CategoriesPage: React.FC = () => {
   };
 
   const filteredCategories = useMemo(() => {
-    if (!searchTerm.trim()) return categories;
+    const list = categories.filter((cat) => !cat.type || cat.type === activeTab);
+    if (!searchTerm.trim()) return list;
     const term = searchTerm.toLowerCase();
-    return categories.filter(
+    return list.filter(
       (cat) =>
         cat.name.toLowerCase().includes(term) ||
         (cat.description && cat.description.toLowerCase().includes(term)),
     );
-  }, [categories, searchTerm]);
+  }, [categories, activeTab, searchTerm]);
 
   const handleOpenCreate = () => {
     setSelectedCategory(null);
@@ -50,11 +52,16 @@ export const CategoriesPage: React.FC = () => {
 
   const handleFormSubmit = async (data: CreateCategoryDTO) => {
     try {
+      const payload: CreateCategoryDTO = {
+        ...data,
+        type: activeTab,
+      };
+
       if (selectedCategory) {
-        await updateCategory(selectedCategory.id, data);
+        await updateCategory(selectedCategory.id, payload);
         showNotification('success', 'Categoría actualizada exitosamente.');
       } else {
-        await createCategory(data);
+        await createCategory(payload);
         showNotification('success', 'Categoría registrada exitosamente.');
       }
     } catch (err: any) {
@@ -93,29 +100,58 @@ export const CategoriesPage: React.FC = () => {
       {/* Encabezado y Acciones */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Categorías de Activos Fijos</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Catálogo de Categorías</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Administración del catálogo patrimonial y familias de activos COMIBOL
+            Administración del catálogo de familias para Activos Fijos y Suministros COMIBOL.
           </p>
         </div>
 
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-sm transition-all shrink-0"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-sm transition-all shrink-0 cursor-pointer"
         >
           <HiPlus className="text-base" />
-          <span>Nueva Categoría</span>
+          <span>Nueva Categoría de {activeTab === 'ASSET' ? 'Activos Fijos' : 'Suministros'}</span>
+        </button>
+      </div>
+
+      {/* Pestañas (Tabs) de División de Categorías */}
+      <div className="flex border-b border-slate-200 bg-white rounded-t-2xl px-3 pt-3 gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('ASSET')}
+          className={`flex items-center gap-2 px-5 py-3 font-bold text-xs rounded-t-xl transition-all border-b-2 cursor-pointer ${
+            activeTab === 'ASSET'
+              ? 'border-amber-500 text-amber-600 bg-amber-50/50'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <HiOutlineBriefcase className="text-base" />
+          <span>Categorías de Activos Fijos</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('SUPPLY')}
+          className={`flex items-center gap-2 px-5 py-3 font-bold text-xs rounded-t-xl transition-all border-b-2 cursor-pointer ${
+            activeTab === 'SUPPLY'
+              ? 'border-amber-500 text-amber-600 bg-amber-50/50'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <HiOutlineCube className="text-base" />
+          <span>Categorías de Suministros / Materiales</span>
         </button>
       </div>
 
       {/* Barra de Filtros y Búsqueda */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-b-2xl border border-slate-200/80 shadow-xs">
         <div className="w-full sm:w-96">
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Buscar por nombre o descripción..."
+            placeholder={`Buscar categoría de ${activeTab === 'ASSET' ? 'activos' : 'suministros'}...`}
           />
         </div>
         <div className="text-xs font-semibold text-slate-500">
@@ -135,13 +171,13 @@ export const CategoriesPage: React.FC = () => {
       ) : filteredCategories.length === 0 ? (
         <EmptyState
           icon={<HiOutlineTag className="text-4xl text-slate-400" />}
-          title="No se encontraron categorías"
+          title={`No se encontraron categorías de ${activeTab === 'ASSET' ? 'activos fijos' : 'suministros'}`}
           description={
             searchTerm
               ? 'No hay registros que coincidan con la búsqueda actual.'
-              : 'Empieza registrando la primera categoría para organizar los activos.'
+              : `Empieza registrando la primera categoría para organizar los ${activeTab === 'ASSET' ? 'activos fijos' : 'suministros'}.`
           }
-          actionText={searchTerm ? 'Limpiar búsqueda' : 'Crear Categoría'}
+          actionText={searchTerm ? 'Limpiar búsqueda' : `Crear Categoría de ${activeTab === 'ASSET' ? 'Activos' : 'Suministros'}`}
           onAction={searchTerm ? () => setSearchTerm('') : handleOpenCreate}
         />
       ) : (
@@ -152,7 +188,7 @@ export const CategoriesPage: React.FC = () => {
                 <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="px-6 py-3.5 w-16 text-center">N°</th>
                   <th className="px-6 py-3.5">Nombre de Categoría</th>
-                  <th className="px-6 py-3.5 text-center">Vida Útil (Años)</th>
+                  {activeTab === 'ASSET' && <th className="px-6 py-3.5 text-center">Vida Útil (Años)</th>}
                   <th className="px-6 py-3.5">Descripción</th>
                   <th className="px-6 py-3.5 text-right">Acciones</th>
                 </tr>
@@ -162,11 +198,13 @@ export const CategoriesPage: React.FC = () => {
                   <tr key={cat.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-6 py-4 text-center font-bold text-slate-400">{index + 1}</td>
                     <td className="px-6 py-4 font-bold text-slate-800">{cat.name}</td>
-                    <td className="px-6 py-4 text-center font-bold text-slate-700">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/60">
-                        {cat.usefulLife ?? 5} años
-                      </span>
-                    </td>
+                    {activeTab === 'ASSET' && (
+                      <td className="px-6 py-4 text-center font-bold text-slate-700">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/60">
+                          {cat.usefulLife ?? 0} años
+                        </span>
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-slate-500 max-w-md truncate">{cat.description || '—'}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -174,7 +212,7 @@ export const CategoriesPage: React.FC = () => {
                           type="button"
                           onClick={() => handleOpenEdit(cat)}
                           title="Editar categoría"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
                         >
                           <HiPencilSquare className="text-base" />
                         </button>
@@ -182,7 +220,7 @@ export const CategoriesPage: React.FC = () => {
                           type="button"
                           onClick={() => setCategoryToDelete(cat)}
                           title="Eliminar categoría"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                         >
                           <HiTrash className="text-base" />
                         </button>
@@ -196,12 +234,13 @@ export const CategoriesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Formulario */}
+      {/* Modal Formulario Categoría */}
       <CategoryFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleFormSubmit}
         category={selectedCategory}
+        defaultType={activeTab}
         isLoading={isLoading}
       />
 

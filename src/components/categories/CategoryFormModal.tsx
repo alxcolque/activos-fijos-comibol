@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { AssetCategory, CreateCategoryDTO } from '../../interfaces/category.interface';
+import type { AssetCategory, CreateCategoryDTO, CategoryType } from '../../interfaces/category.interface';
 import { HiXMark } from 'react-icons/hi2';
 
 interface CategoryFormModalProps {
@@ -7,6 +7,7 @@ interface CategoryFormModalProps {
   onClose: () => void;
   onSubmit: (data: CreateCategoryDTO) => Promise<void>;
   category?: AssetCategory | null;
+  defaultType?: CategoryType;
   isLoading?: boolean;
 }
 
@@ -15,10 +16,12 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
   onClose,
   onSubmit,
   category,
+  defaultType = 'ASSET',
   isLoading = false,
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [type, setType] = useState<CategoryType>('ASSET');
   const [usefulLife, setUsefulLife] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,16 +29,20 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
     if (category) {
       setName(category.name || '');
       setDescription(category.description || '');
+      setType(category.type || defaultType);
       setUsefulLife(category.usefulLife ?? 0);
     } else {
       setName('');
       setDescription('');
-      setUsefulLife(0);
+      setType(defaultType);
+      setUsefulLife(defaultType === 'SUPPLY' ? 0 : 5);
     }
     setError(null);
-  }, [category, isOpen]);
+  }, [category, defaultType, isOpen]);
 
   if (!isOpen) return null;
+
+  const isSupplyType = type === 'SUPPLY';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +53,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       return;
     }
 
-    if (usefulLife < 0) {
+    if (!isSupplyType && usefulLife < 0) {
       setError('La vida útil debe ser mayor o igual a 0 años.');
       return;
     }
@@ -55,7 +62,8 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       await onSubmit({
         name: name.trim(),
         description: description.trim() || undefined,
-        usefulLife: Number(usefulLife),
+        type,
+        usefulLife: isSupplyType ? 0 : Number(usefulLife),
       });
       onClose();
     } catch (err: any) {
@@ -68,9 +76,16 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
         {/* Header del Modal */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="text-base font-bold text-slate-800">
-            {category ? 'Editar Categoría de Activo' : 'Nueva Categoría de Activo'}
-          </h3>
+          <div>
+            <h3 className="text-base font-bold text-slate-800">
+              {category
+                ? `Editar Categoría (${isSupplyType ? 'Suministros' : 'Activos Fijos'})`
+                : `Nueva Categoría de ${isSupplyType ? 'Suministros' : 'Activos Fijos'}`}
+            </h3>
+            <span className="text-[11px] font-semibold text-slate-400">
+              {isSupplyType ? 'Categoría para Insumos y Materiales' : 'Categoría para Bienes Patrimoniales'}
+            </span>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -96,26 +111,29 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="EJ: Maquinaria Pesada Minera"
+              placeholder={isSupplyType ? 'Ej: Materiales de Oficina, Aseo, etc.' : 'Ej: Maquinaria Pesada Minera'}
               required
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Vida Útil Predeterminada (Años) <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="number"
-              value={usefulLife}
-              onChange={(e) => setUsefulLife(Number(e.target.value))}
-              placeholder="EJ: 0"
-              required
-              min={0}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
-            />
-          </div>
+          {/* Vida útil solo se muestra si NO es categoría de suministros */}
+          {!isSupplyType && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Vida Útil Predeterminada (Años) <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={usefulLife}
+                onChange={(e) => setUsefulLife(Number(e.target.value))}
+                placeholder="Ej: 5"
+                required
+                min={0}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -125,7 +143,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descripción de los tipos de activos comprendidos en esta categoría..."
+              placeholder="Descripción de los elementos comprendidos en esta categoría..."
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all resize-none"
             />
           </div>
@@ -135,14 +153,14 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-5 py-2.5 text-xs font-bold text-blue-900 bg-amber-500 hover:bg-amber-400 rounded-xl shadow-sm transition-all disabled:opacity-50"
+              className="px-5 py-2.5 text-xs font-bold text-blue-900 bg-amber-500 hover:bg-amber-400 rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
               {isLoading ? 'Guardando...' : category ? 'Guardar Cambios' : 'Crear Categoría'}
             </button>
