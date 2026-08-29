@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { UserItem, CreateUserDTO, UpdateUserDTO, UserRole } from '../../interfaces/user.interface';
+import { useProjectStore } from '../../store/projectStore';
 import { HiXMark } from 'react-icons/hi2';
 
 interface UserFormModalProps {
@@ -17,19 +18,29 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   user,
   isLoading = false,
 }) => {
+  const { projects, fetchProjects } = useProjectStore();
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [profession, setProfession] = useState('');
+  const [projectId, setProjectId] = useState<string>('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('admin');
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isOpen) {
+      fetchProjects({ limit: 100 });
+    }
+  }, [isOpen, fetchProjects]);
+
+  useEffect(() => {
     if (user) {
       setFullName(user.fullName || '');
       setEmail(user.email || '');
       setProfession(user.profession || '');
+      setProjectId(user.projectId || '');
       setPassword('');
       setRole(user.role || 'admin');
       setIsActive(user.isActive ?? true);
@@ -37,6 +48,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setFullName('');
       setEmail('');
       setProfession('');
+      setProjectId('');
       setPassword('');
       setRole('admin');
       setIsActive(true);
@@ -76,6 +88,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           fullName: fullName.trim(),
           email: email.trim(),
           profession: profession.trim() || null,
+          projectId: projectId || null,
           role,
           isActive,
         };
@@ -88,6 +101,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           fullName: fullName.trim(),
           email: email.trim(),
           profession: profession.trim() || null,
+          projectId: projectId || null,
           password: password.trim(),
           role,
           isActive,
@@ -101,9 +115,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
         {/* Header del Modal */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <h3 className="text-base font-bold text-slate-800">
             {user ? 'Editar Usuario de Sistema' : 'Nuevo Usuario de Sistema'}
           </h3>
@@ -117,7 +131,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-600">
               {error}
@@ -149,6 +163,24 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               placeholder="Ej: Ingeniero de Minas, Contador Auditor, etc."
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Proyecto Asignado <span className="text-slate-400 font-normal">(Opcional)</span>
+            </label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white transition-all cursor-pointer"
+            >
+              <option value="">-- Ningún proyecto seleccionado --</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -208,7 +240,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </div>
 
           {/* Footer del Modal */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 shrink-0">
             <button
               type="button"
               onClick={onClose}

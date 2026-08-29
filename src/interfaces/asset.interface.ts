@@ -46,6 +46,8 @@ export interface AssetModel {
   location?: LocationRef;
 }
 
+export type Asset = AssetModel;
+
 export interface CreateAssetDTO {
   code: string;
   name: string;

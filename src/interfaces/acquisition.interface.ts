@@ -1,13 +1,20 @@
 export interface AcquisitionDetailItem {
   id: string;
   acquisitionId: string;
-  projectId?: string | null;
+  supplyId?: string | null;
+  assetId?: string | null;
   unit?: string | null;
   quantity: number;
   createdAt?: string;
   updatedAt?: string;
-  project?: {
+  supply?: {
     id: string;
+    name: string;
+    unit: string;
+  } | null;
+  asset?: {
+    id: string;
+    code: string;
     name: string;
   } | null;
 }
@@ -15,9 +22,10 @@ export interface AcquisitionDetailItem {
 export interface AcquisitionItem {
   id: string;
   userId: string;
-  projectUserId?: string | null;
+  projectId?: string | null;
   checkoutUserId?: string | null;
   departureDate?: string | null;
+  type?: 'SUPPLY' | 'ASSET' | string;
   createdAt: string;
   updatedAt: string;
 
@@ -28,11 +36,9 @@ export interface AcquisitionItem {
     profession?: string | null;
   } | null;
 
-  projectUser?: {
+  project?: {
     id: string;
-    fullName: string;
-    email: string;
-    profession?: string | null;
+    name: string;
   } | null;
 
   checkoutUser?: {
@@ -47,11 +53,13 @@ export interface AcquisitionItem {
 
 export interface CreateAcquisitionDTO {
   userId: string;
-  projectUserId?: string | null;
+  projectId?: string | null;
   checkoutUserId?: string | null;
   departureDate?: string | null;
+  type?: 'SUPPLY' | 'ASSET' | string;
   details?: {
-    projectId?: string | null;
+    supplyId?: string | null;
+    assetId?: string | null;
     unit?: string | null;
     quantity?: number;
   }[];

@@ -4,7 +4,7 @@ import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi2';
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  totalItems: number;
+  totalItems?: number;
   itemsPerPage?: number;
   onPageChange: (page: number) => void;
 }
@@ -12,14 +12,14 @@ interface PaginationProps {
 export const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
-  totalItems,
+  totalItems = 0,
   itemsPerPage = 10,
   onPageChange,
 }) => {
   if (totalPages <= 1) return null;
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems || totalPages * itemsPerPage);
 
   const getPageNumbers = () => {
     const pages: number[] = [];
@@ -40,9 +40,18 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border border-slate-200/80 rounded-2xl shadow-2xs text-xs font-semibold text-slate-600">
       <div>
-        Mostrando <span className="font-bold text-slate-900">{startItem}</span> a{' '}
-        <span className="font-bold text-slate-900">{endItem}</span> de{' '}
-        <span className="font-bold text-slate-900">{totalItems}</span> registros
+        {totalItems > 0 ? (
+          <>
+            Mostrando <span className="font-bold text-slate-900">{startItem}</span> a{' '}
+            <span className="font-bold text-slate-900">{endItem}</span> de{' '}
+            <span className="font-bold text-slate-900">{totalItems}</span> registros
+          </>
+        ) : (
+          <>
+            Página <span className="font-bold text-slate-900">{currentPage}</span> de{' '}
+            <span className="font-bold text-slate-900">{totalPages}</span>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-1.5">
@@ -86,3 +95,5 @@ export const Pagination: React.FC<PaginationProps> = ({
     </div>
   );
 };
+
+export default Pagination;

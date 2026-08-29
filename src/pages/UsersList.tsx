@@ -183,6 +183,7 @@ export const UsersList: React.FC = () => {
                 <tr>
                   <th className="px-6 py-4">Usuario</th>
                   <th className="px-6 py-4">Profesión / Cargo</th>
+                  <th className="px-6 py-4">Proyecto</th>
                   <th className="px-6 py-4">Correo Electrónico</th>
                   <th className="px-6 py-4 text-center">Rol</th>
                   <th className="px-6 py-4 text-center">Estado</th>
@@ -204,6 +205,15 @@ export const UsersList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 font-semibold text-slate-600">
                       {u.profession || <span className="text-slate-300 italic">No especificada</span>}
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-slate-700">
+                      {u.project?.name ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                          {u.project.name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 italic">Sin proyecto</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 font-mono text-slate-600">{u.email}</td>
                     <td className="px-6 py-4 text-center">{renderRoleBadge(u.role)}</td>

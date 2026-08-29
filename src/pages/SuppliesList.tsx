@@ -504,6 +504,7 @@ export const SuppliesList: React.FC = () => {
             <Pagination
               currentPage={page}
               totalPages={totalPages}
+              totalItems={totalSupplies}
               onPageChange={setPage}
             />
           </div>

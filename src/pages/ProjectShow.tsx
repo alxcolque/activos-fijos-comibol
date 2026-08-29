@@ -17,11 +17,8 @@ import {
   HiOutlineCube,
   HiOutlinePlus,
   HiOutlineMagnifyingGlass,
-  HiOutlineExclamationTriangle,
-  HiOutlineCheckCircle,
   HiOutlineArrowPathRoundedSquare,
   HiOutlineTrash,
-  HiOutlineDocumentText,
   HiOutlineLockOpen,
   HiOutlineArrowDownTray,
   HiXMark,
@@ -470,7 +467,7 @@ export const ProjectShowPage: React.FC = () => {
 
   // Confirmar Eliminación Asignación Activo
   const handleConfirmDelete = async () => {
-    if (!deleteItem) return;
+    if (!deleteItem || isDeleting) return;
 
     setIsDeleting(true);
     try {
@@ -1252,6 +1249,10 @@ export const ProjectShowPage: React.FC = () => {
                 />
               </div>
 
+              {releaseValidationWarning && (
+                <div className="text-[11px] font-semibold text-rose-700">{releaseValidationWarning}</div>
+              )}
+
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700">Observaciones de Devolución</label>
                 <textarea
@@ -1273,7 +1274,7 @@ export const ProjectShowPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isReleasing}
+                  disabled={isReleasing || !!releaseValidationWarning}
                   className="px-5 py-2 text-xs font-bold text-amber-950 bg-amber-500 hover:bg-amber-400 rounded-xl shadow-xs transition-all cursor-pointer"
                 >
                   {isReleasing ? 'Procesando...' : 'Confirmar Liberación'}
@@ -1315,6 +1316,10 @@ export const ProjectShowPage: React.FC = () => {
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
                 />
               </div>
+
+              {releaseSupplyWarning && (
+                <div className="text-[11px] font-semibold text-rose-700">{releaseSupplyWarning}</div>
+              )}
 
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700">Observaciones de Devolución</label>
