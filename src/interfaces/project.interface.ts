@@ -12,8 +12,10 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   totalAssets?: number;
+  totalSupplies?: number;
   _count?: {
     assetProjects: number;
+    supplyProjects?: number;
   };
 }
 

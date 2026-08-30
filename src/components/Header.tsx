@@ -3,7 +3,7 @@ import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import { Breadcrumb } from './Breadcrumb';
 import { CurrencyToggle } from './CurrencyToggle';
-import { HiBars3, HiBell, HiUser } from 'react-icons/hi2';
+import { HiBars3, HiUser } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
 
 export const Header: React.FC = () => {
@@ -11,18 +11,18 @@ export const Header: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const [notifOpen, setNotifOpen] = useState(false);
+  /* const [notifOpen, setNotifOpen] = useState(false); */
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const notifRef = useRef<HTMLDivElement>(null);
+  //const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
   // Cerrar menús al hacer click afuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+      /* if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setNotifOpen(false);
-      }
+      } */
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
@@ -42,9 +42,10 @@ export const Header: React.FC = () => {
       <div className="flex items-center gap-3.5 relative">
         {/* Switcher de Moneda (BOB 🇧🇴 / USD 🇺🇸) */}
         <CurrencyToggle />
-
+        {/* Imagen AP */}
+        <img src="/AP.png" alt="AP" className="w-10 h-6 rounded-full" />
         {/* Notificaciones */}
-        <div ref={notifRef} className="relative">
+        {/* <div ref={notifRef} className="relative">
           <button
             type="button"
             onClick={() => {
@@ -58,8 +59,6 @@ export const Header: React.FC = () => {
               3
             </span>
           </button>
-
-          {/* Menú de Notificaciones */}
           {notifOpen && (
             <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-30 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-4 py-2 font-bold text-slate-800 border-b border-slate-100 text-xs">
@@ -81,7 +80,7 @@ export const Header: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Perfil de Usuario */}
         {user && (
@@ -90,7 +89,7 @@ export const Header: React.FC = () => {
               type="button"
               onClick={() => {
                 setProfileOpen(!profileOpen);
-                setNotifOpen(false);
+                /* setNotifOpen(false); */
               }}
               className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-amber-500 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors focus:outline-none shrink-0"
               title={user.fullName || user.name || 'Administrador'}

@@ -12,10 +12,11 @@ import {
 
 interface AssetCardProps {
   asset: AssetModel;
+  calculationDate?: string;
   onDelete?: (asset: AssetModel) => void;
 }
 
-export const AssetCard: React.FC<AssetCardProps> = ({ asset, onDelete }) => {
+export const AssetCard: React.FC<AssetCardProps> = ({ asset, calculationDate, onDelete }) => {
   const navigate = useNavigate();
 
   const formattedValue = formatCurrency(asset.purchaseValue);
@@ -58,7 +59,7 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, onDelete }) => {
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => navigate(`/activos/${asset.id}`)}
+              onClick={() => navigate(`/activos/${asset.id}${calculationDate ? `?calculationDate=${calculationDate}` : ''}`)}
               title="Ver Ficha Técnica"
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
             >

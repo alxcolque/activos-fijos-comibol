@@ -11,6 +11,7 @@ import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { SearchBar } from '../components/SearchBar';
 import { Pagination } from '../components/Pagination';
+import { useCurrencyStore } from '../store/currencyStore';
 import { formatCurrency } from '../utils/currency';
 import { getTodayDateString, formatDate } from '../utils/assets';
 import api from '../api/axios.instance';
@@ -49,6 +50,7 @@ const ALL_COLUMNS: ColumnDef[] = [
 
 export const AssetsList: React.FC = () => {
   const navigate = useNavigate();
+  const { currency, exchangeRate } = useCurrencyStore();
   const {
     assets,
     categories,
@@ -115,6 +117,8 @@ export const AssetsList: React.FC = () => {
           status: selectedStatus || undefined,
           location: selectedLocation || undefined,
           calculationDate: calculationDate || undefined,
+          currency: currency || 'BOB',
+          exchangeRate: exchangeRate || 11.86,
         },
         responseType: 'blob',
       });
@@ -413,27 +417,27 @@ export const AssetsList: React.FC = () => {
         />
       ) : viewMode === 'table' ? (
         <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-          {/* Scrollable Container with sticky actions column */}
-          <div className="overflow-x-auto max-w-full">
-            <table className="w-full text-left border-collapse whitespace-nowrap">
-              <thead>
-                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                  <th className="px-4 py-3.5 w-12 text-center">N°</th>
-                  {visibleColumns.code && <th className="px-4 py-3.5">Código</th>}
-                  {visibleColumns.qrCode && <th className="px-4 py-3.5 text-center">QR</th>}
-                  {visibleColumns.name && <th className="px-4 py-3.5">Nombre del Activo</th>}
-                  {visibleColumns.quantity && <th className="px-4 py-3.5 text-center">Cant.</th>}
-                  {visibleColumns.quantityOut && <th className="px-4 py-3.5 text-center">Salidas</th>}
-                  {visibleColumns.available && <th className="px-4 py-3.5 text-center">Disponibles</th>}
-                  {visibleColumns.unit && <th className="px-4 py-3.5 text-center">Unidad</th>}
-                  {visibleColumns.status && <th className="px-4 py-3.5 text-center">Estado</th>}
-                  {visibleColumns.purchaseDate && <th className="px-4 py-3.5 text-center">Fecha Adquisición</th>}
-                  {visibleColumns.purchaseValue && <th className="px-4 py-3.5 text-right">Valor Original</th>}
-                  {visibleColumns.dep && <th className="px-4 py-3.5 text-right">Depreciación</th>}
-                  {visibleColumns.depac && <th className="px-4 py-3.5 text-right">Dep. Acumulada</th>}
-                  {visibleColumns.balance && <th className="px-4 py-3.5 text-right">Saldo</th>}
+          {/* Contenedor con Scroll Doble (Horizontal & Vertical) y Encabezado Fijo */}
+          <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-270px)] min-h-[350px] relative scrollbar-thin">
+            <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1200px]">
+              <thead className="bg-slate-50/95 backdrop-blur-xs border-b border-slate-200/80 text-[11px] font-bold text-slate-600 uppercase tracking-wider sticky top-0 z-20">
+                <tr>
+                  <th className="px-4 py-3.5 w-12 text-center bg-slate-50">N°</th>
+                  {visibleColumns.code && <th className="px-4 py-3.5 bg-slate-50">Código</th>}
+                  {visibleColumns.qrCode && <th className="px-4 py-3.5 text-center bg-slate-50">QR</th>}
+                  {visibleColumns.name && <th className="px-4 py-3.5 bg-slate-50">Nombre del Activo</th>}
+                  {visibleColumns.quantity && <th className="px-4 py-3.5 text-center bg-slate-50">Cant.</th>}
+                  {visibleColumns.quantityOut && <th className="px-4 py-3.5 text-center bg-slate-50">Salidas</th>}
+                  {visibleColumns.available && <th className="px-4 py-3.5 text-center bg-slate-50">Disponibles</th>}
+                  {visibleColumns.unit && <th className="px-4 py-3.5 text-center bg-slate-50">Unidad</th>}
+                  {visibleColumns.status && <th className="px-4 py-3.5 text-center bg-slate-50">Estado</th>}
+                  {visibleColumns.purchaseDate && <th className="px-4 py-3.5 text-center bg-slate-50">Fecha Adquisición</th>}
+                  {visibleColumns.purchaseValue && <th className="px-4 py-3.5 text-right bg-slate-50">Valor Original</th>}
+                  {visibleColumns.dep && <th className="px-4 py-3.5 text-right bg-slate-50">Depreciación</th>}
+                  {visibleColumns.depac && <th className="px-4 py-3.5 text-right bg-slate-50">Dep. Acumulada</th>}
+                  {visibleColumns.balance && <th className="px-4 py-3.5 text-right bg-slate-50">Saldo</th>}
                   {/* Sticky Actions Header */}
-                  <th className="px-4 py-3.5 text-right sticky right-0 z-20 bg-slate-100/95 backdrop-blur-xs shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.06)] border-l border-slate-200/80">
+                  <th className="px-4 py-3.5 text-right sticky right-0 top-0 z-30 bg-slate-100/95 backdrop-blur-xs shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.06)] border-l border-slate-200/80">
                     Acciones
                   </th>
                 </tr>
@@ -511,7 +515,7 @@ export const AssetsList: React.FC = () => {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
-                          onClick={() => navigate(`/activos/${item.id}`)}
+                          onClick={() => navigate(`/activos/${item.id}?calculationDate=${calculationDate}`)}
                           title="Ver Ficha Técnica"
                           className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                         >
@@ -547,6 +551,7 @@ export const AssetsList: React.FC = () => {
             <AssetCard
               key={asset.id}
               asset={asset as any}
+              calculationDate={calculationDate}
               onDelete={(a) => {
                 setAssetToDelete(a);
                 setDeleteConfirmOpen(true);

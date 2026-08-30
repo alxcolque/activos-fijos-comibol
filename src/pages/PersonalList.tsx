@@ -4,6 +4,8 @@ import api from '../api/axios.instance';
 import type { AcquisitionItem, CreateAcquisitionDTO } from '../interfaces/acquisition.interface';
 import type { User } from '../interfaces/user.interface';
 import type { Project } from '../interfaces/project.interface';
+import type { SupplyProjectItem } from '../interfaces/supply.interface';
+import type { Asset } from '../interfaces/asset.interface';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmptyState } from '../components/EmptyState';
@@ -22,7 +24,18 @@ import {
   HiUser,
   HiArchiveBox,
   HiCube,
+  HiCheck,
 } from 'react-icons/hi2';
+
+interface SelectedDetailItem {
+  supplyId?: string;
+  assetId?: string;
+  name: string;
+  code?: string;
+  unit: string;
+  maxAvailable: number;
+  quantity: number;
+}
 
 export const PersonalList: React.FC = () => {
   const navigate = useNavigate();
@@ -57,10 +70,65 @@ export const PersonalList: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Estados de ítems disponibles según proyecto y tipo
+  const [availableSupplies, setAvailableSupplies] = useState<SupplyProjectItem[]>([]);
+  const [availableAssets, setAvailableAssets] = useState<Asset[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [selectedDetails, setSelectedDetails] = useState<SelectedDetailItem[]>([]);
+
   useEffect(() => {
     fetchAcquisitions();
     loadSupportCatalog();
   }, [page, search]);
+
+  // Carga dinámica de ítems disponibles cuando se selecciona un proyecto o cambia la pestaña de tipo
+  useEffect(() => {
+    if (!isFormModalOpen) return;
+    setSelectedDetails([]);
+
+    if (!selectedProjectId) {
+      setAvailableSupplies([]);
+      setAvailableAssets([]);
+      return;
+    }
+
+    const loadAvailableItems = async () => {
+      setIsLoadingItems(true);
+      try {
+        if (typeTab === 'SUPPLY') {
+          const res = await api.get<{ success: boolean; data: SupplyProjectItem[] }>(
+            `/supply-projects/project/${selectedProjectId}`
+          );
+          if (res.data?.data) {
+            const filtered = res.data.data.filter(
+              (sp) => sp.quantity - (sp.outputQuantity || 0) > 0
+            );
+            setAvailableSupplies(filtered);
+          } else {
+            setAvailableSupplies([]);
+          }
+        } else {
+          const res = await api.get<{ success: boolean; data: Asset[] }>('/assets', {
+            params: { limit: 200 },
+          });
+          if (res.data?.data) {
+            const filtered = res.data.data.filter(
+              (a) => a.quantity - (a.quantityOut || 0) > 0
+            );
+            setAvailableAssets(filtered);
+          } else {
+            setAvailableAssets([]);
+          }
+        }
+      } catch (err) {
+        console.error('Error al cargar ítems disponibles:', err);
+      } finally {
+        setIsLoadingItems(false);
+      }
+    };
+
+    loadAvailableItems();
+  }, [selectedProjectId, typeTab, isFormModalOpen]);
 
   const fetchAcquisitions = async () => {
     setIsLoading(true);
@@ -112,17 +180,62 @@ export const PersonalList: React.FC = () => {
     setTypeTab('SUPPLY');
     setUserId(currentUser?.id || '');
     setCheckoutUserId('');
-    setDepartureDate('');
+    setDepartureDate(new Date().toISOString().split('T')[0]); // Fecha actual por defecto
     setSelectedProjectId('');
+    setSelectedDetails([]);
     setFormError(null);
     setIsFormModalOpen(true);
+  };
+
+  const handleToggleSupplyItem = (sp: SupplyProjectItem, qty: number, checked: boolean) => {
+    const available = sp.quantity - (sp.outputQuantity || 0);
+    const validQty = Math.max(1, Math.min(qty, available));
+
+    if (!checked) {
+      setSelectedDetails((prev) => prev.filter((d) => d.supplyId !== sp.supplyId));
+    } else {
+      setSelectedDetails((prev) => {
+        const exists = prev.some((d) => d.supplyId === sp.supplyId);
+        if (exists) {
+          return prev.map((d) => (d.supplyId === sp.supplyId ? { ...d, quantity: validQty } : d));
+        }
+        return [
+          ...prev,
+          {
+            supplyId: sp.supplyId,
+            name: sp.supply?.name || 'Suministro',
+            unit: sp.supply?.unit || 'PZA',
+            maxAvailable: available,
+            quantity: validQty,
+          },
+        ];
+      });
+    }
+  };
+
+  const handleToggleAssetItem = (asset: Asset, checked: boolean) => {
+    if (!checked) {
+      setSelectedDetails((prev) => prev.filter((d) => d.assetId !== asset.id));
+    } else {
+      const available = asset.quantity - (asset.quantityOut || 0);
+      setSelectedDetails((prev) => [
+        ...prev.filter((d) => d.assetId !== asset.id),
+        {
+          assetId: asset.id,
+          name: asset.name,
+          code: asset.code,
+          unit: 'PZA',
+          maxAvailable: available,
+          quantity: 1,
+        },
+      ]);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
-    // Si es operador o admin, validar persona que entrega
     const finalUserId = isAdmin ? userId : (currentUser?.id || '');
     if (!finalUserId) {
       setFormError('Debe seleccionar la persona que entrega el material.');
@@ -143,6 +256,12 @@ export const PersonalList: React.FC = () => {
         checkoutUserId: checkoutUserId || null,
         departureDate: departureDate || null,
         type: typeTab,
+        details: selectedDetails.map((item) => ({
+          supplyId: item.supplyId || null,
+          assetId: item.assetId || null,
+          unit: item.unit,
+          quantity: item.quantity,
+        })),
       };
 
       const res = await api.post('/acquisitions', payload);
@@ -150,7 +269,6 @@ export const PersonalList: React.FC = () => {
       setIsFormModalOpen(false);
       fetchAcquisitions();
 
-      // Navegar automáticamente a la vista de detalle para agregar insumos/activos
       if (res.data?.data?.id) {
         navigate(`/personal/${res.data.data.id}`);
       }
@@ -190,12 +308,14 @@ export const PersonalList: React.FC = () => {
         </div>
       )}
 
-      {/* Encabezado y Acciones */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* Header Página */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Personal y Asignaciones</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            <span>Fichas de Entrega a Personal</span>
+          </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Gestión de entregas de insumos, materiales y activos fijos asignados al personal de COMIBOL.
+            Gestión de entrega de materiales, insumos y asignación de activos fijos al personal de COMIBOL
           </p>
         </div>
 
@@ -203,7 +323,7 @@ export const PersonalList: React.FC = () => {
           <button
             type="button"
             onClick={handleOpenCreateModal}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold rounded-2xl text-xs shadow-sm transition-all hover:scale-105 active:scale-95"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 font-bold text-xs rounded-xl shadow-xs transition-all shrink-0"
           >
             <HiPlus className="text-base" />
             <span>Nuevo Registro de Personal</span>
@@ -211,114 +331,116 @@ export const PersonalList: React.FC = () => {
         )}
       </div>
 
-      {/* Barra de Búsqueda */}
-      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-xs">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar por usuario que entrega, que retira o proyecto..."
-        />
+      {/* Buscador y Contadores */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs">
+        <div className="w-full sm:w-96">
+          <SearchBar
+            value={search}
+            onChange={(val) => {
+              setSearch(val);
+              setPage(1);
+            }}
+            placeholder="Buscar por personal, proyecto..."
+          />
+        </div>
+
+        <div className="text-xs font-semibold text-slate-500">
+          Total de registros: <span className="font-bold text-slate-900">{totalAcquisitions}</span>
+        </div>
       </div>
 
-      {/* Tabla de Resultados */}
-      {isLoading && acquisitions.length === 0 ? (
-        <div className="py-20">
-          <LoadingSpinner label="Cargando registros de personal..." />
+      {/* Tabla Principal */}
+      {isLoading ? (
+        <div className="py-16">
+          <LoadingSpinner label="Cargando catálogo de registros de personal..." />
         </div>
       ) : error ? (
-        <div className="p-6 bg-rose-50 border border-rose-200 rounded-2xl text-center text-xs font-semibold text-rose-700">
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-semibold text-rose-600 text-center">
           {error}
         </div>
       ) : acquisitions.length === 0 ? (
         <EmptyState
           icon={<HiUserGroup className="text-4xl text-slate-400" />}
-          title="No se encontraron registros de personal"
-          description={search ? `No hay resultados para "${search}".` : 'Aún no se han generado entregas de personal.'}
-          actionText={search ? 'Limpiar Búsqueda' : !isGuest ? 'Nuevo Registro' : undefined}
-          onAction={search ? () => setSearch('') : !isGuest ? handleOpenCreateModal : undefined}
+          title="Sin registros de personal"
+          description={
+            search
+              ? 'No se encontraron registros que coincidan con la búsqueda.'
+              : 'Presione "Nuevo Registro de Personal" para crear la primera ficha de entrega.'
+          }
+          actionText={search ? 'Limpiar búsqueda' : 'Nuevo Registro'}
+          onAction={search ? () => setSearch('') : handleOpenCreateModal}
         />
       ) : (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
+        <div className="bg-white border border-slate-200/80 rounded-3xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="px-6 py-4">Tipo</th>
-                  <th className="px-6 py-4">Persona que Entrega</th>
-                  <th className="px-6 py-4">Persona que Retira</th>
-                  <th className="px-6 py-4">Proyecto Asignado</th>
-                  <th className="px-6 py-4 text-center">Fecha de Salida</th>
-                  <th className="px-6 py-4 text-center">Fecha Registro</th>
-                  <th className="px-6 py-4 text-right">Acciones</th>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="px-6 py-3.5 w-12 text-center">N°</th>
+                  <th className="px-6 py-3.5 text-center">Tipo</th>
+                  <th className="px-6 py-3.5">Entregado Por (Admin/Op)</th>
+                  <th className="px-6 py-3.5">Retirado Por (Personal)</th>
+                  <th className="px-6 py-3.5">Proyecto</th>
+                  <th className="px-6 py-3.5 text-center">Fecha Salida</th>
+                  <th className="px-6 py-3.5 text-center">Ítems Detalle</th>
+                  <th className="px-6 py-3.5 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {acquisitions.map((item) => {
+              <tbody className="divide-y divide-slate-100">
+                {acquisitions.map((item, index) => {
                   const isSupply = item.type === 'SUPPLY';
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
+                    <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="px-6 py-4 text-center font-bold text-slate-400">
+                        {(page - 1) * 10 + index + 1}
+                      </td>
+                      <td className="px-6 py-4 text-center">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase border ${
                             isSupply
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : 'bg-purple-50 text-purple-700 border-purple-200'
                           }`}
                         >
-                          {isSupply ? <HiArchiveBox className="text-xs" /> : <HiCube className="text-xs" />}
-                          {isSupply ? 'Suministro' : 'Activo'}
+                          {isSupply ? 'SUMINISTRO' : 'ACTIVO'}
                         </span>
                       </td>
-
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 font-bold text-slate-800">
                         <div className="flex items-center gap-2">
-                          <HiUser className="text-amber-500 shrink-0" />
-                          <span className="font-bold text-slate-800">
-                            {item.user?.fullName || 'No registrada'}
-                          </span>
+                          <HiUser className="text-slate-400 text-sm" />
+                          <span>{item.user?.fullName || 'No especificado'}</span>
                         </div>
                       </td>
-
-                      <td className="px-6 py-4 font-semibold text-slate-600">
-                        {item.checkoutUser?.fullName || <span className="text-slate-300 italic">No especificada</span>}
+                      <td className="px-6 py-4 font-medium text-slate-600">
+                        {item.checkoutUser ? item.checkoutUser.fullName : <span className="text-slate-400 font-normal">Sin asignar</span>}
                       </td>
-
-                      <td className="px-6 py-4">
-                        {item.project?.name ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                            {item.project.name}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 italic">Sin proyecto</span>
-                        )}
+                      <td className="px-6 py-4 font-semibold text-slate-700">
+                        {item.project?.name || <span className="text-slate-400 font-normal">Sin proyecto</span>}
                       </td>
-
-                      <td className="px-6 py-4 text-center text-slate-600 font-semibold">
-                        {item.departureDate ? formatDate(item.departureDate) : '-'}
+                      <td className="px-6 py-4 text-center text-slate-600 font-medium">
+                        {item.departureDate ? formatDate(item.departureDate) : '—'}
                       </td>
-
-                      <td className="px-6 py-4 text-center text-slate-500 font-medium">
-                        {formatDate(item.createdAt)}
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-slate-100 text-slate-700">
+                          {item.details?.length || 0} ítems
+                        </span>
                       </td>
-
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
                             onClick={() => navigate(`/personal/${item.id}`)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-blue-900 bg-amber-400 hover:bg-amber-300 font-bold text-xs shadow-2xs transition-all hover:scale-105"
-                            title="Ver detalle de personal"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                            title="Ver Ficha Completa / Agregar Detalle"
                           >
-                            <HiEye className="text-sm" />
-                            <span>Ver detalle de personal</span>
+                            <HiEye className="text-base" />
                           </button>
-
                           {!isGuest && (
                             <button
                               type="button"
                               onClick={() => setAcquisitionToDelete(item)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-1"
-                              title="Eliminar registro"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                              title="Eliminar Registro"
                             >
                               <HiTrash className="text-base" />
                             </button>
@@ -331,23 +453,24 @@ export const PersonalList: React.FC = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Paginación */}
-          <div className="p-4 border-t border-slate-100">
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              totalItems={totalAcquisitions}
-            />
-          </div>
         </div>
       )}
 
-      {/* Modal Formulario Nuevo Registro de Personal */}
+      {/* Paginador */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalAcquisitions}
+          itemsPerPage={10}
+          onPageChange={(p) => setPage(p)}
+        />
+      )}
+
+      {/* Modal Crear Registro de Personal */}
       {isFormModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
             {/* Header Modal */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
               <h3 className="text-base font-bold text-slate-800">
@@ -403,7 +526,7 @@ export const PersonalList: React.FC = () => {
                 </div>
               )}
 
-              {/* Persona que Entrega (Visible para Admin, Oculto & Autoselect para Operador) */}
+              {/* 1. Persona que Entrega */}
               {isAdmin ? (
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -427,7 +550,7 @@ export const PersonalList: React.FC = () => {
                 <input type="hidden" value={currentUser?.id || ''} />
               )}
 
-              {/* Persona que Retira */}
+              {/* 2. Persona que Retira */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Persona que Retira Material (Insumos)
@@ -446,27 +569,7 @@ export const PersonalList: React.FC = () => {
                 </select>
               </div>
 
-              {/* Proyecto Asignado */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Proyecto Asignado <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
-                >
-                  <option value="">-- Seleccionar Proyecto --</option>
-                  {projectsList.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Fecha de Salida */}
+              {/* 3. Fecha de Salida (Fecha Actual por defecto) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Fecha de Salida
@@ -477,6 +580,165 @@ export const PersonalList: React.FC = () => {
                   onChange={(e) => setDepartureDate(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
                 />
+              </div>
+
+              {/* 4. Proyecto Asignado */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Proyecto Asignado <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white cursor-pointer"
+                >
+                  <option value="">-- Seleccionar Proyecto --</option>
+                  {projectsList.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 5. Sección Dinámica de Lista de Disponibles (SUMINISTROS vs ACTIVOS) */}
+              <div className="pt-2">
+                <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/40">
+                  <div className="px-4 py-3 bg-slate-100/80 border-b border-slate-200 flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-slate-800 flex items-center gap-2">
+                      {typeTab === 'SUPPLY' ? (
+                        <HiArchiveBox className="text-emerald-600 text-base" />
+                      ) : (
+                        <HiCube className="text-purple-600 text-base" />
+                      )}
+                      <span>
+                        {typeTab === 'SUPPLY'
+                          ? 'Suministros Disponibles en el Proyecto'
+                          : 'Activos Fijos Disponibles en Sistema'}
+                      </span>
+                    </span>
+                    {selectedDetails.length > 0 && (
+                      <span className="text-[11px] font-bold px-2 py-0.5 bg-amber-100 text-amber-900 rounded-full border border-amber-200">
+                        {selectedDetails.length} seleccionados
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="p-3 max-h-56 overflow-y-auto space-y-2">
+                    {!selectedProjectId ? (
+                      <p className="text-xs text-slate-400 italic text-center py-4">
+                        Seleccione un proyecto en el campo superior para consultar la disponibilidad de {typeTab === 'SUPPLY' ? 'suministros' : 'activos'}.
+                      </p>
+                    ) : isLoadingItems ? (
+                      <div className="py-4">
+                        <LoadingSpinner label="Consultando disponibilidad..." />
+                      </div>
+                    ) : typeTab === 'SUPPLY' ? (
+                      availableSupplies.length === 0 ? (
+                        <p className="text-xs text-rose-500 font-semibold text-center py-4">
+                          No hay suministros asignados o con saldo disponible en el proyecto seleccionado.
+                        </p>
+                      ) : (
+                        availableSupplies.map((sp) => {
+                          const available = sp.quantity - (sp.outputQuantity || 0);
+                          const isSelected = selectedDetails.some((d) => d.supplyId === sp.supplyId);
+                          const currentQty = selectedDetails.find((d) => d.supplyId === sp.supplyId)?.quantity || 1;
+
+                          return (
+                            <div
+                              key={sp.id}
+                              className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                                isSelected
+                                  ? 'bg-emerald-50/80 border-emerald-300'
+                                  : 'bg-white border-slate-200 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => handleToggleSupplyItem(sp, currentQty, e.target.checked)}
+                                  className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer"
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-slate-800 truncate">
+                                    {sp.supply?.name || 'Suministro'}
+                                  </p>
+                                  <p className="text-[11px] text-slate-500 font-medium">
+                                    Disponibles en proyecto: <span className="font-extrabold text-emerald-700">{available} {sp.supply?.unit || 'PZA'}</span>
+                                  </p>
+                                </div>
+                              </div>
+
+                              {isSelected && (
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <label className="text-[11px] font-bold text-slate-600">Cant:</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max={available}
+                                    value={currentQty}
+                                    onChange={(e) =>
+                                      handleToggleSupplyItem(sp, Number(e.target.value), true)
+                                    }
+                                    className="w-16 px-2 py-1 bg-white border border-emerald-300 rounded-lg text-xs font-bold text-slate-800 text-center focus:outline-none"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )
+                    ) : availableAssets.length === 0 ? (
+                      <p className="text-xs text-rose-500 font-semibold text-center py-4">
+                        No hay activos fijos con saldo disponible en el sistema.
+                      </p>
+                    ) : (
+                      availableAssets.map((asset) => {
+                        const available = asset.quantity - (asset.quantityOut || 0);
+                        const isSelected = selectedDetails.some((d) => d.assetId === asset.id);
+
+                        return (
+                          <div
+                            key={asset.id}
+                            className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                              isSelected
+                                ? 'bg-purple-50/80 border-purple-300'
+                                : 'bg-white border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => handleToggleAssetItem(asset, e.target.checked)}
+                                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500 cursor-pointer"
+                              />
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-800 truncate">
+                                  <span className="font-mono text-[10px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded mr-1.5">
+                                    {asset.code}
+                                  </span>
+                                  {asset.name}
+                                </p>
+                                <p className="text-[11px] text-slate-500 font-medium">
+                                  Disponibles: <span className="font-extrabold text-purple-700">{available} PZA</span> (Total: {asset.quantity})
+                                </p>
+                              </div>
+                            </div>
+
+                            {isSelected && (
+                              <span className="px-2 py-0.5 bg-purple-100 text-purple-900 rounded-lg text-[10px] font-extrabold flex items-center gap-1">
+                                <HiCheck /> Asignado (1 UN)
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Footer Modal */}

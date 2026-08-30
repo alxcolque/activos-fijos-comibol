@@ -18,6 +18,7 @@ import {
   HiEye,
   HiOutlineBriefcase,
   HiOutlineCube,
+  HiOutlineArchiveBox,
 } from 'react-icons/hi2';
 
 export const ProjectsPage: React.FC = () => {
@@ -212,6 +213,7 @@ export const ProjectsPage: React.FC = () => {
                   <th className="px-6 py-3.5 text-center">Estado</th>
                   <th className="px-6 py-3.5 text-center">Vigencia (Inicio - Fin)</th>
                   <th className="px-6 py-3.5 text-center">Activos Asignados</th>
+                  <th className="px-6 py-3.5 text-center">Suministros Asignados</th>
                   <th className="px-6 py-3.5 text-right">Acciones</th>
                 </tr>
               </thead>
@@ -246,6 +248,12 @@ export const ProjectsPage: React.FC = () => {
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold bg-blue-50 text-blue-950 border border-blue-200/60">
                         <HiOutlineCube className="text-amber-500 text-xs" />
                         <span>{pry.totalAssets ?? pry._count?.assetProjects ?? 0} activos</span>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-950 border border-emerald-200/60">
+                        <HiOutlineArchiveBox className="text-emerald-600 text-xs" />
+                        <span>{pry.totalSupplies ?? pry._count?.supplyProjects ?? 0} suministros</span>
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">

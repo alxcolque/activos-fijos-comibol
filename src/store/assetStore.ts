@@ -17,7 +17,7 @@ interface AssetState {
   error: string | null;
 
   fetchAssets: (params?: AssetQueryParams) => Promise<void>;
-  fetchAssetById: (id: string) => Promise<AssetModel | null>;
+  fetchAssetById: (id: string, calculationDate?: string) => Promise<AssetModel | null>;
   fetchInitialData: () => Promise<void>;
   createAsset: (data: CreateAssetDTO) => Promise<AssetModel>;
   updateAsset: (id: string, data: UpdateAssetDTO) => Promise<void>;
@@ -58,10 +58,12 @@ export const useAssetStore = create<AssetState>((set, get) => ({
     }
   },
 
-  fetchAssetById: async (id) => {
+  fetchAssetById: async (id, calculationDate) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.get<{ success: boolean; data: AssetModel }>(`/assets/${id}`);
+      const response = await api.get<{ success: boolean; data: AssetModel }>(`/assets/${id}`, {
+        params: { calculationDate: calculationDate || undefined },
+      });
       set({ selectedAsset: response.data.data, isLoading: false });
       return response.data.data;
     } catch (err: any) {

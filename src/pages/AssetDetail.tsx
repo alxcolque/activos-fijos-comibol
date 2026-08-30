@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAssetStore } from '../store/assetStore';
 import { useAuthStore } from '../store/authStore';
 import { SectionCard } from '../components/SectionCard';
@@ -8,21 +8,24 @@ import { QRBadge } from '../components/QRBadge';
 import { AssetImage } from '../components/AssetImage';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/currency';
-import { formatDateLong } from '../utils/assets';
-import { HiOutlineArrowLeft, HiOutlinePencilSquare } from 'react-icons/hi2';
+import { formatDate, formatDateLong } from '../utils/assets';
+import { HiOutlineArrowLeft, HiOutlinePencilSquare, HiOutlineCalendar } from 'react-icons/hi2';
 
 export const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const calculationDate = searchParams.get('calculationDate') || searchParams.get('date');
+
   const { selectedAsset, isLoading, error, fetchAssetById } = useAssetStore();
   const { user } = useAuthStore();
   const isGuest = user?.role === 'guest';
 
   useEffect(() => {
     if (id) {
-      fetchAssetById(id);
+      fetchAssetById(id, calculationDate || undefined);
     }
-  }, [id, fetchAssetById]);
+  }, [id, calculationDate, fetchAssetById]);
 
   if (isLoading) {
     return (
@@ -70,7 +73,15 @@ export const AssetDetail: React.FC = () => {
               <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">{asset.name}</h1>
               <StatusBadge status={asset.status?.name || 'Operativo'} size="sm" />
             </div>
-            <span className="text-xs text-amber-600 font-mono font-bold mt-0.5">{asset.code}</span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-xs text-amber-600 font-mono font-bold">{asset.code}</span>
+              {calculationDate && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg">
+                  <HiOutlineCalendar className="text-xs text-amber-600" />
+                  <span>Depreciación al: {formatDate(calculationDate)}</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
