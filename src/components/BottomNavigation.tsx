@@ -1,9 +1,11 @@
 import React from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { 
   HiOutlineSquares2X2, 
   HiOutlineBriefcase, 
   HiOutlinePlus,
+  HiOutlineFolder,
   HiOutlineDocumentChartBar, 
   HiOutlineCog6Tooth 
 } from 'react-icons/hi2';
@@ -11,14 +13,19 @@ import {
 export const BottomNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuthStore();
+  const role = user?.role || 'operador';
 
-  const navItems = [
-    { name: 'Inicio', path: '/', icon: HiOutlineSquares2X2 },
-    { name: 'Activos', path: '/activos', icon: HiOutlineBriefcase },
-    { name: 'divider', path: '', icon: () => null }, // Espacio para el botón central +
-    { name: 'Reportes', path: '/reportes', icon: HiOutlineDocumentChartBar },
-    { name: 'Ajustes', path: '/configuracion', icon: HiOutlineCog6Tooth },
+  const allItems = [
+    { name: 'Inicio', path: '/', icon: HiOutlineSquares2X2, roles: ['admin', 'operador', 'guest'] },
+    { name: 'Activos', path: '/activos', icon: HiOutlineBriefcase, roles: ['admin', 'operador', 'guest'] },
+    { name: 'divider', path: '', icon: () => null, roles: ['admin', 'operador'] }, // FAB solo para admin/operador
+    { name: 'Proyectos', path: '/proyectos', icon: HiOutlineFolder, roles: ['guest'] },
+    { name: 'Reportes', path: '/reportes', icon: HiOutlineDocumentChartBar, roles: ['admin', 'operador'] },
+    { name: 'Ajustes', path: '/configuracion', icon: HiOutlineCog6Tooth, roles: ['admin'] },
   ];
+
+  const navItems = allItems.filter((item) => item.roles.includes(role));
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200/80 shadow-[0_-4px_16px_rgba(0,0,0,0.04)] px-4 py-2 flex items-center justify-between z-30 pb-safe">

@@ -22,14 +22,14 @@ export const Sidebar: React.FC = () => {
   const { user } = useAuthStore();
   const location = useLocation();
 
-  const role = user?.role || 'admin';
+  const role = user?.role || 'operador';
 
   const menuItems = [
     { name: 'Panel', path: '/', icon: HiOutlineSquares2X2, roles: ['admin', 'operador', 'guest'] },
     { name: 'Activos', path: '/activos', icon: HiOutlineBriefcase, roles: ['admin', 'operador', 'guest'] },
-    { name: 'Suministros', path: '/suministros', icon: HiOutlineCube, roles: ['admin', 'operador', 'guest'] },
+    { name: 'Suministros', path: '/suministros', icon: HiOutlineCube, roles: ['admin', 'operador'] },
     { name: 'Proyectos', path: '/proyectos', icon: HiOutlineFolder, roles: ['admin', 'operador', 'guest'] },
-    { name: 'Personal', path: '/personal', icon: HiOutlineUserGroup, roles: ['admin', 'operador', 'guest'] },
+    { name: 'Personal', path: '/personal', icon: HiOutlineUserGroup, roles: ['admin', 'operador'] },
     { name: 'Categorías', path: '/categorias', icon: HiOutlineTag, roles: ['admin', 'operador'] },
     { name: 'Estados', path: '/estados', icon: HiOutlineCheckCircle, roles: ['admin', 'operador'] },
     { name: 'Ubicaciones', path: '/ubicaciones', icon: HiOutlineMapPin, roles: ['admin', 'operador'] },

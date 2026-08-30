@@ -105,16 +105,18 @@ export const Header: React.FC = () => {
                   <p className="font-bold text-xs text-amber-600 truncate mt-0.5">{user.email}</p>
                 </div>
                 <div className="py-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      navigate('/configuracion');
-                    }}
-                    className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    Configuración del Sistema
-                  </button>
+                  {user.role === 'admin' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        navigate('/configuracion');
+                      }}
+                      className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Configuración del Sistema
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {

@@ -571,14 +571,16 @@ export const ProjectShowPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
-          <button
-            onClick={() => setIsWordModalOpen(true)}
-            title="Descargar Informe de Inventario en documento Word (.docx)"
-            className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all shrink-0 border border-blue-800 cursor-pointer"
-          >
-            <HiOutlineArrowDownTray className="text-base text-amber-400" />
-            <span>Reporte Word</span>
-          </button>
+          {!isGuest && (
+            <button
+              onClick={() => setIsWordModalOpen(true)}
+              title="Descargar Informe de Inventario en documento Word (.docx)"
+              className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all shrink-0 border border-blue-800 cursor-pointer"
+            >
+              <HiOutlineArrowDownTray className="text-base text-amber-400" />
+              <span>Reporte Word</span>
+            </button>
+          )}
 
           {!isGuest && (
             <>

@@ -24,9 +24,13 @@ import {
   HiDocumentText,
 } from 'react-icons/hi2';
 
+import { useAuthStore } from '../store/authStore';
+
 export const PersonalShowPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const isGuest = user?.role === 'guest';
 
   const [acquisition, setAcquisition] = useState<AcquisitionItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -371,40 +375,44 @@ export const PersonalShowPage: React.FC = () => {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleDownloadActaEntrega}
-              disabled={isDownloadingActa}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-amber-400 font-bold rounded-2xl text-xs shadow-sm transition-all hover:scale-105 disabled:opacity-50 cursor-pointer"
-            >
-              <HiDocumentText className="text-base text-amber-400" />
-              <span>
-                {isDownloadingActa
-                  ? 'Generando Word...'
-                  : isSupplyType
-                    ? 'Acta de Entrega'
-                    : 'Acta de Préstamo'}
-              </span>
-            </button>
+            {!isGuest && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleDownloadActaEntrega}
+                  disabled={isDownloadingActa}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-amber-400 font-bold rounded-2xl text-xs shadow-sm transition-all hover:scale-105 disabled:opacity-50 cursor-pointer"
+                >
+                  <HiDocumentText className="text-base text-amber-400" />
+                  <span>
+                    {isDownloadingActa
+                      ? 'Generando Word...'
+                      : isSupplyType
+                        ? 'Acta de Entrega'
+                        : 'Acta de Préstamo'}
+                  </span>
+                </button>
 
-            {isSupplyType ? (
-              <button
-                type="button"
-                onClick={openAddSupplyModal}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-xs shadow-sm transition-all hover:scale-105"
-              >
-                <HiPlus className="text-base" />
-                <span>Agregar Suministro</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={openAddAssetModal}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl text-xs shadow-sm transition-all hover:scale-105"
-              >
-                <HiPlus className="text-base" />
-                <span>Agregar Activo</span>
-              </button>
+                {isSupplyType ? (
+                  <button
+                    type="button"
+                    onClick={openAddSupplyModal}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-xs shadow-sm transition-all hover:scale-105"
+                  >
+                    <HiPlus className="text-base" />
+                    <span>Agregar Suministro</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={openAddAssetModal}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl text-xs shadow-sm transition-all hover:scale-105"
+                  >
+                    <HiPlus className="text-base" />
+                    <span>Agregar Activo</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -466,7 +474,7 @@ export const PersonalShowPage: React.FC = () => {
             <span className="text-xs font-bold text-slate-500">
               {acquisition.details?.length || 0} ítems registrados
             </span>
-            {!isSupplyType && (acquisition.details?.length || 0) > 0 && (
+            {!isGuest && !isSupplyType && (acquisition.details?.length || 0) > 0 && (
               !isReturnMode ? (
                 <button
                   type="button"

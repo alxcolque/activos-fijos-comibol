@@ -21,18 +21,30 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  const role = user?.role || 'admin';
+  const role = user?.role || 'operador';
 
-  // Verificar restricciones por ruta
+  // Verificar restricciones por ruta para Operador y Guest
   const path = location.pathname.toLowerCase();
-  if (path.includes('/usuarios') && role !== 'admin') {
+  if ((path.includes('/usuarios') || path.includes('/configuracion')) && role !== 'admin') {
     return <Navigate to="/" replace />;
   }
-  if (path.includes('/configuracion') && role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
-  if ((path.includes('/categorias') || path.includes('/estados') || path.includes('/ubicaciones')) && role === 'guest') {
-    return <Navigate to="/" replace />;
+
+  // Restricciones para rol Guest (Solo lectura de Panel, Activos y Proyectos)
+  if (role === 'guest') {
+    if (path.includes('/activos/nuevo') || path.includes('/editar')) {
+      return <Navigate to="/" replace />;
+    }
+
+    const isAllowedForGuest =
+      path === '/' ||
+      path === '/activos' ||
+      path.startsWith('/activos/') ||
+      path === '/proyectos' ||
+      path.startsWith('/proyectos/');
+
+    if (!isAllowedForGuest) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   if (allowedRoles && !allowedRoles.includes(role)) {

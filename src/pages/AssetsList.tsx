@@ -11,6 +11,7 @@ import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { SearchBar } from '../components/SearchBar';
 import { Pagination } from '../components/Pagination';
+import { useAuthStore } from '../store/authStore';
 import { useCurrencyStore } from '../store/currencyStore';
 import { formatCurrency } from '../utils/currency';
 import { getTodayDateString, formatDate } from '../utils/assets';
@@ -50,6 +51,8 @@ const ALL_COLUMNS: ColumnDef[] = [
 
 export const AssetsList: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const isGuest = user?.role === 'guest';
   const { currency, exchangeRate } = useCurrencyStore();
   const {
     assets,
@@ -209,14 +212,16 @@ export const AssetsList: React.FC = () => {
         title="Control de Activos Fijos"
         subtitle="Catálogo institucional y registro de activos fijos patrimoniales de COMIBOL"
         action={
-          <button
-            type="button"
-            className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 rounded-xl font-bold text-xs shadow-sm transition-all shrink-0"
-            onClick={() => navigate('/activos/nuevo')}
-          >
-            <HiPlus className="text-base" />
-            <span>Nuevo Activo</span>
-          </button>
+          !isGuest ? (
+            <button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-blue-950 rounded-xl font-bold text-xs shadow-sm transition-all shrink-0"
+              onClick={() => navigate('/activos/nuevo')}
+            >
+              <HiPlus className="text-base" />
+              <span>Nuevo Activo</span>
+            </button>
+          ) : undefined
         }
       />
 
@@ -363,16 +368,18 @@ export const AssetsList: React.FC = () => {
             </div>
 
             {/* Descargar Reporte Excel */}
-            <button
-              type="button"
-              onClick={handleDownloadExcelReport}
-              disabled={isDownloadingExcel}
-              title="Descargar Reporte en Excel (.xlsx) de activos según los filtros aplicados"
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-2xs transition-all shrink-0 border border-emerald-800 disabled:opacity-50"
-            >
-              <HiOutlineArrowDownTray className="text-sm text-emerald-200" />
-              <span>{isDownloadingExcel ? 'Excel...' : 'Reporte Excel'}</span>
-            </button>
+            {!isGuest && (
+              <button
+                type="button"
+                onClick={handleDownloadExcelReport}
+                disabled={isDownloadingExcel}
+                title="Descargar Reporte en Excel (.xlsx) de activos según los filtros aplicados"
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-2xs transition-all shrink-0 border border-emerald-800 disabled:opacity-50"
+              >
+                <HiOutlineArrowDownTray className="text-sm text-emerald-200" />
+                <span>{isDownloadingExcel ? 'Excel...' : 'Reporte Excel'}</span>
+              </button>
+            )}
 
             {/* Selector de Vista (Tabla / Tarjetas) */}
             <div className="flex items-center border border-slate-200 rounded-xl p-1 bg-slate-50">
@@ -521,22 +528,26 @@ export const AssetsList: React.FC = () => {
                         >
                           <HiOutlineEye className="text-base" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/activos/${item.id}/editar`)}
-                          title="Editar Activo"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        >
-                          <HiOutlinePencilSquare className="text-base" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteRequest(item, e)}
-                          title="Eliminar Activo"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        >
-                          <HiOutlineTrash className="text-base" />
-                        </button>
+                        {!isGuest && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/activos/${item.id}/editar`)}
+                              title="Editar Activo"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            >
+                              <HiOutlinePencilSquare className="text-base" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteRequest(item, e)}
+                              title="Eliminar Activo"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            >
+                              <HiOutlineTrash className="text-base" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

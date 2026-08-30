@@ -10,6 +10,8 @@ import {
   HiOutlineTrash,
 } from 'react-icons/hi2';
 
+import { useAuthStore } from '../store/authStore';
+
 interface AssetCardProps {
   asset: AssetModel;
   calculationDate?: string;
@@ -18,6 +20,8 @@ interface AssetCardProps {
 
 export const AssetCard: React.FC<AssetCardProps> = ({ asset, calculationDate, onDelete }) => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const isGuest = user?.role === 'guest';
 
   const formattedValue = formatCurrency(asset.purchaseValue);
 
@@ -66,24 +70,28 @@ export const AssetCard: React.FC<AssetCardProps> = ({ asset, calculationDate, on
               <HiOutlineEye className="text-sm" />
               <span>Ver</span>
             </button>
-            <button
-              type="button"
-              onClick={() => navigate(`/activos/${asset.id}/editar`)}
-              title="Editar Activo"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
-            >
-              <HiOutlinePencilSquare className="text-sm" />
-              <span>Editar</span>
-            </button>
-            {onDelete && (
-              <button
-                type="button"
-                onClick={() => onDelete(asset)}
-                title="Eliminar Activo"
-                className="p-1.5 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
-              >
-                <HiOutlineTrash className="text-sm" />
-              </button>
+            {!isGuest && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/activos/${asset.id}/editar`)}
+                  title="Editar Activo"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                >
+                  <HiOutlinePencilSquare className="text-sm" />
+                  <span>Editar</span>
+                </button>
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => onDelete(asset)}
+                    title="Eliminar Activo"
+                    className="p-1.5 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+                  >
+                    <HiOutlineTrash className="text-sm" />
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
